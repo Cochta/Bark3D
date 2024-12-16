@@ -1,2 +1,2 @@
 # BarkDirectX
-Math lib Changed for DirectXMath
+3D version of Bark Physics Engine
