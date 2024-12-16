@@ -11,7 +11,7 @@ struct Color {
 };
 // for the graphics renderer to draw
 struct GraphicsData {
-  std::variant<CircleF, RectangleF, PolygonF> Shape{
+  std::variant<CircleF, RectangleF> Shape{
       CircleF(XMVectorZero(), 1)};
   bool Filled = true;
   Color Color;

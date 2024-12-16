@@ -224,12 +224,5 @@ void SFMLApp::DrawAllGraphicsData() noexcept {
 					 static_cast<sf::Uint8>(bd.Color.a) });
 			}
 		}
-		else if (bd.Shape.index() == (int)ShapeType::Polygon) {
-			auto& polygon = std::get<PolygonF>(bd.Shape);
-			DrawPolygon(polygon.Vertices(), { static_cast<sf::Uint8>(bd.Color.r),
-											 static_cast<sf::Uint8>(bd.Color.g),
-											 static_cast<sf::Uint8>(bd.Color.b),
-											 static_cast<sf::Uint8>(bd.Color.a) });
-		}
 	}
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(BarkDirectX)
+project(Bark3D)
 
 set(CMAKE_CXX_STANDARD 17)
 

@@ -23,7 +23,7 @@ private:
 
 	static constexpr std::size_t CIRCLE_NBR = 100;
 	static constexpr std::size_t RECTANGLE_NBR = 100;
-	static constexpr std::size_t TRIANGLE_NBR = 100;
+	static constexpr std::size_t TRIANGLE_NBR = 0;
 
 	std::size_t _nbObjects{};
 

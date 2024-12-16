@@ -284,8 +284,6 @@ void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
 			return Intersect(circle, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Rectangle:
 			return Intersect(circle, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-			/*case ShapeType::Polygon:
-				return Intersect(circle, std::get<PolygonF>(colB.Shape) + GetBody(colB.BodyRef).Position);*/
 		}
 		break;
 	}
@@ -298,22 +296,6 @@ void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
 			return Intersect(rect, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Rectangle:
 			return Intersect(rect, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-			case ShapeType::Polygon:
-				return Intersect(rect, std::get<PolygonF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		}
-		break;
-	}
-	case ShapeType::Polygon:
-	{
-		PolygonF pol = std::get<PolygonF>(colA.Shape) + GetBody(colA.BodyRef).Position;
-		switch (ShapeB)
-		{
-		case ShapeType::Circle:
-			return Intersect(pol, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Rectangle:
-			return Intersect(pol, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Polygon:
-			return Intersect(pol, std::get<PolygonF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}

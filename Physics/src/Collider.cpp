@@ -13,28 +13,6 @@ RectangleF Collider::GetBounds() const noexcept
 	{
 		return std::get<RectangleF>(Shape) + BodyPosition;
 	}
-	case static_cast<int>(ShapeType::Polygon):
-	{
-		float minX = std::numeric_limits<float>::max();
-		float minY = std::numeric_limits<float>::max();
-		float maxX = std::numeric_limits<float>::min();
-		float maxY = std::numeric_limits<float>::min();
-		PolygonF polygon = std::get<PolygonF>(Shape);
-
-		for (auto& vertex : polygon.Vertices())
-		{
-			float x = XMVectorGetX(vertex); // Get the X component of the vector
-			float y = XMVectorGetY(vertex); // Get the Y component of the vector
-
-			// Update min/max values
-			minX = std::min(minX, x);
-			minY = std::min(minY, y);
-			maxX = std::max(maxX, x);
-			maxY = std::max(maxY, y);
-		}
-
-		return RectangleF{ XMVECTOR{minX, minY}, XMVECTOR{maxX, maxY} } + BodyPosition;
-	}
 	}
 	return { XMVectorZero(), XMVectorZero() };
 }

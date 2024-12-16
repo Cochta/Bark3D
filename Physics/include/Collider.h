@@ -19,7 +19,7 @@
 class Collider
 {
 public:
-	std::variant<CircleF, RectangleF, PolygonF> Shape{
+	std::variant<CircleF, RectangleF> Shape{
 			CircleF(XMVectorZero(), 1) }; /**< The shape associated with the collider. */
 
 	BodyRef BodyRef; /**< Reference to the body associated with the collider. */

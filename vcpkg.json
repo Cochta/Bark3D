@@ -1,5 +1,5 @@
 {
-    "name": "barkdirectx",
+    "name": "bark3d",
     "version-string": "1.0",
     "dependencies": [
       "sfml",

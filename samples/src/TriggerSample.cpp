@@ -78,29 +78,6 @@ void TriggerSample::SampleSetUp() noexcept
 		rbd.Shape = RectangleF(XMVectorZero(), RECTANGLE_BOUNDS) + rectBody.Position;
 		AllGraphicsData.push_back(rbd);
 	}
-	// Create Triangles
-	for (std::size_t i = 0; i < TRIANGLE_NBR; ++i)
-	{
-		const auto triangleBodyRef = _world.CreateBody();
-		_bodyRefs.push_back(triangleBodyRef);
-		auto& triangleBody = _world.GetBody(triangleBodyRef);
-
-		triangleBody.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0, 0), SPEED);
-
-		triangleBody.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-						  Random::Range(100.f, Metrics::Height - 100.f) };
-
-		const auto triangleColRef = _world.CreateCollider(triangleBodyRef);
-		_colRefs.push_back(triangleColRef);
-		auto& triangleCol = _world.GetCollider(triangleColRef);
-		triangleCol.Shape = PolygonF(TRIANGLE_VERTICES);
-		triangleCol.BodyPosition = triangleBody.Position;
-		triangleCol.IsTrigger = true;
-
-		GraphicsData tbd;
-		tbd.Shape = PolygonF(TRIANGLE_VERTICES) + triangleBody.Position;
-		AllGraphicsData.push_back(tbd);
-	}
 }
 
 void TriggerSample::DrawQuadtree(const QuadNode& node) noexcept
@@ -157,9 +134,6 @@ void TriggerSample::SampleUpdate() noexcept
 			break;
 		case static_cast<int>(ShapeType::Rectangle):
 			AllGraphicsData[i].Shape = std::get<RectangleF>(shape) + body.Position;
-			break;
-		case static_cast<int>(ShapeType::Polygon):
-			AllGraphicsData[i].Shape = std::get<PolygonF>(shape) + body.Position;
 			break;
 		}
 
