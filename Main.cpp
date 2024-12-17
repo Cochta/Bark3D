@@ -52,7 +52,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
 	// OpenGL init
 	glEnable(GL_DEPTH_TEST);
-
 	// enter GLUT event processing cycle
 	glutMainLoop();
 
