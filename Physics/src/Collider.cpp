@@ -9,7 +9,7 @@ RectangleF Collider::GetBounds() const noexcept
 		auto circle = std::get<CircleF>(Shape);
 		return RectangleF::FromCenter(circle.Center(), { circle.Radius(), circle.Radius() }) + BodyPosition;
 	}
-	case static_cast<int>(ShapeType::Rectangle):
+	case static_cast<int>(ShapeType::Rectangleee):
 	{
 		return std::get<RectangleF>(Shape) + BodyPosition;
 	}

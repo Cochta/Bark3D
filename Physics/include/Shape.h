@@ -8,7 +8,7 @@ using namespace DirectX;
 
 enum class ShapeType
 {
-	Circle, Rectangle, None
+	Circle, Rectangleee, None
 };
 
 template <typename T>
@@ -69,15 +69,15 @@ using CircleF = Circle<float>;
 using CircleI = Circle<int>;
 
 template <typename T>
-class Rectangle
+class Rectangleee
 {
 public:
 	/**
-	 * @brief Construct a new Rectangle object
+	 * @brief Construct a new Rectangleee object
 	 * @param position the position of the rectangle
 	 * @param size the size of the rectangle
 	 */
-	constexpr Rectangle(XMVECTOR minBound, XMVECTOR maxBound) noexcept : _minBound(minBound), _maxBound(maxBound) {}
+	constexpr Rectangleee(XMVECTOR minBound, XMVECTOR maxBound) noexcept : _minBound(minBound), _maxBound(maxBound) {}
 
 private:
 	XMVECTOR _minBound = XMVECTOR::Zero();
@@ -118,19 +118,19 @@ public:
 		return XMVectorScale(XMVectorSubtract(_maxBound, _minBound), 0.5f);
 	}
 
-	[[nodiscard]] constexpr Rectangle<T> operator+(const XMVECTOR& vec) const noexcept
+	[[nodiscard]] constexpr Rectangleee<T> operator+(const XMVECTOR& vec) const noexcept
 	{
-		return Rectangle<T>(XMVectorAdd(_minBound, vec), XMVectorAdd(_maxBound, vec));
+		return Rectangleee<T>(XMVectorAdd(_minBound, vec), XMVectorAdd(_maxBound, vec));
 	}
 
-	[[nodiscard]] static constexpr Rectangle<T> FromCenter(XMVECTOR center, XMVECTOR halfSize) noexcept
+	[[nodiscard]] static constexpr Rectangleee<T> FromCenter(XMVECTOR center, XMVECTOR halfSize) noexcept
 	{
-		return Rectangle<T>(XMVectorSubtract(center, halfSize), XMVectorAdd(center, halfSize));
+		return Rectangleee<T>(XMVectorSubtract(center, halfSize), XMVectorAdd(center, halfSize));
 	}
 };
 
-using RectangleF = Rectangle<float>;
-using RectangleI = Rectangle<int>;
+using RectangleF = Rectangleee<float>;
+using RectangleI = Rectangleee<int>;
 
 // Intersect functions
 
@@ -144,7 +144,7 @@ template<typename T>
 }
 
 template<typename T>
-[[nodiscard]] constexpr bool Intersect(const Rectangle<T> rectangle1, const Rectangle<T> rectangle2) noexcept
+[[nodiscard]] constexpr bool Intersect(const Rectangleee<T> rectangle1, const Rectangleee<T> rectangle2) noexcept
 {
 	if (XMVectorGetX(rectangle1.MaxBound()) < XMVectorGetX(rectangle2.MinBound()) ||
 		XMVectorGetX(rectangle1.MinBound()) > XMVectorGetX(rectangle2.MaxBound()))
@@ -157,7 +157,7 @@ template<typename T>
 }
 
 template <typename T>
-[[nodiscard]] constexpr bool Intersect(const Rectangle<T> rectangle, const Circle<T> circle) noexcept
+[[nodiscard]] constexpr bool Intersect(const Rectangleee<T> rectangle, const Circle<T> circle) noexcept
 {
 	const auto center = circle.Center();
 
@@ -173,8 +173,8 @@ template <typename T>
 	const auto maxBoundRect2 = XMVectorAdd(maxBound, XMVectorSet(0, radius, 0, 0));
 
 	// Added circle radius to rectangle bounds
-	const Rectangle<T> rectangle1(minBoundRect1, maxBoundRect1);
-	const Rectangle<T> rectangle2(minBoundRect2, maxBoundRect2);
+	const Rectangleee<T> rectangle1(minBoundRect1, maxBoundRect1);
+	const Rectangleee<T> rectangle2(minBoundRect2, maxBoundRect2);
 
 	// Check rectangle bounds
 	if (rectangle1.Contains(center)) return true;
@@ -197,7 +197,7 @@ template <typename T>
 }
 
 template <typename T>
-[[nodiscard]] constexpr bool Intersect(const Circle<T> circle, const Rectangle<T> rectangle) noexcept
+[[nodiscard]] constexpr bool Intersect(const Circle<T> circle, const Rectangleee<T> rectangle) noexcept
 {
 	return Intersect(rectangle, circle);
 }

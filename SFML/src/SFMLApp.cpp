@@ -178,22 +178,6 @@ void SFMLApp::DrawRectangleBorder(const XMVECTOR minBound, const XMVECTOR maxBou
 	_window.draw(rectangle);
 }
 
-void SFMLApp::DrawPolygon(const std::vector<XMVECTOR>& vertices, const sf::Color& col) {
-	if (vertices.size() < 3) {
-		return;  // Don't draw if the polygon is invalid
-	}
-
-	sf::ConvexShape polygon(vertices.size());
-
-	for (size_t i = 0; i < vertices.size(); ++i) {
-		polygon.setPoint(i, sf::Vector2f(XMVectorGetX(vertices[i]), XMVectorGetY(vertices[i])));
-	}
-
-	polygon.setFillColor(col);
-
-	_window.draw(polygon);
-}
-
 void SFMLApp::DrawAllGraphicsData() noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -207,7 +191,7 @@ void SFMLApp::DrawAllGraphicsData() noexcept {
 				 static_cast<sf::Uint8>(bd.Color.b),
 				 static_cast<sf::Uint8>(bd.Color.a) });
 		}
-		else if (bd.Shape.index() == (int)ShapeType::Rectangle) {
+		else if (bd.Shape.index() == (int)ShapeType::Rectangleee) {
 			auto& rect = std::get<RectangleF>(bd.Shape);
 			if (!bd.Filled) {
 				DrawRectangleBorder(rect.MinBound(), rect.MaxBound(),

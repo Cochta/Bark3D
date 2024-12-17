@@ -15,12 +15,13 @@ void StarSystemSample::SampleSetUp() noexcept
 	{
 		_sunRef = _world.CreateBody();
 		auto& sun = _world.GetBody(_sunRef);
-		sun.Position = { static_cast<float>(Metrics::Width) / 2, static_cast<float>(Metrics::Height) / 2 };
-		sun.Mass = 1000000;
+		//sun.Position = { static_cast<float>(Metrics::Width) / 2, static_cast<float>(Metrics::Height) / 2 };
+		sun.Position = { 0, 0, 0 };
+		sun.Mass = 100;
 
 		_bodyRefs.push_back(_sunRef);
 		GraphicsData sgd;
-		_circles.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.03f));
+		_circles.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.01f));
 		sgd.Color = { 255, 255, 0, 255 };
 		AllGraphicsData.push_back(sgd);
 
@@ -29,8 +30,9 @@ void StarSystemSample::SampleSetUp() noexcept
 			// Engine
 			auto bodyRef = _world.CreateBody();
 			auto& body = _world.GetBody(bodyRef);
-			body.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-							 Random::Range(100.f, Metrics::Height - 100.f) };
+			//body.Position = { Random::Range(100.f, Metrics::Width - 100.f),Random::Range(100.f, Metrics::Height - 100.f) };
+			body.Position = { Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f) };
+
 			auto r = XMVectorSubtract(_world.GetBody(_sunRef).Position, body.Position);
 			auto v = sqrt(G * (_world.GetBody(_sunRef).Mass / XMVectorGetX(XMVector3Length(r))));
 			body.Velocity = XMVectorScale(XMVector3Normalize(XMVectorSet(-XMVectorGetY(r), XMVectorGetX(r), 0, 0)), v);
@@ -42,8 +44,8 @@ void StarSystemSample::SampleSetUp() noexcept
 			GraphicsData gd;
 			_circles.emplace_back(XMVectorZero(),
 				Random::Range(
-					Metrics::MetersToPixels(0.05f),
-					Metrics::MetersToPixels(0.15f)));
+					Metrics::MetersToPixels(0.005f),
+					Metrics::MetersToPixels(0.015f)));
 			gd.Color = {
 					Random::Range(0, 255),
 					Random::Range(0, 255),

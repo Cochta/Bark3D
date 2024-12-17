@@ -28,7 +28,7 @@ void Contact::Resolve()
 				std::get<CircleF>(CollidingBodies[1].collider->Shape).Radius() - length;
 		}
 		break;
-		case static_cast<int>(ShapeType::Rectangle):
+		case static_cast<int>(ShapeType::Rectangleee):
 		{
 			const CircleF& circle = std::get<CircleF>(CollidingBodies[0].collider->Shape);
 			const RectangleF& rectangle = std::get<RectangleF>(CollidingBodies[1].collider->Shape);
@@ -73,7 +73,7 @@ void Contact::Resolve()
 		break;
 		}
 		break;
-	case static_cast<int>(ShapeType::Rectangle):
+	case static_cast<int>(ShapeType::Rectangleee):
 		switch (CollidingBodies[1].collider->Shape.index())
 		{
 		case static_cast<int>(ShapeType::Circle):
@@ -82,7 +82,7 @@ void Contact::Resolve()
 			Resolve();
 		}
 		break;
-		case static_cast<int>(ShapeType::Rectangle):
+		case static_cast<int>(ShapeType::Rectangleee):
 		{
 			const RectangleF& rect0 = std::get<RectangleF>(CollidingBodies[0].collider->Shape);
 			const RectangleF& rect1 = std::get<RectangleF>(CollidingBodies[1].collider->Shape);

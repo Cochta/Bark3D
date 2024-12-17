@@ -138,7 +138,7 @@ void BouncingCollisionSample::SampleUpdate() noexcept
 		case static_cast<int>(ShapeType::Circle):
 			AllGraphicsData[i].Shape = std::get<CircleF>(shape) + col.BodyPosition;
 			break;
-		case static_cast<int>(ShapeType::Rectangle):
+		case static_cast<int>(ShapeType::Rectangleee):
 			AllGraphicsData[i].Shape = std::get<RectangleF>(shape) + col.BodyPosition;
 			break;
 		}

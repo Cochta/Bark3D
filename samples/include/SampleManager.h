@@ -2,9 +2,9 @@
 
 #include "DefaultSample.h"
 #include "StarSystemSample.h"
-#include "TriggerSample.h"
-#include "BouncingCollisionSample.h"
-#include "GroundCollisionSample.h"
+//#include "TriggerSample.h"
+//#include "BouncingCollisionSample.h"
+//#include "GroundCollisionSample.h"
 
 class SampleManager
 {

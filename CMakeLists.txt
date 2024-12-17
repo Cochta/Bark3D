@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(imgui-sfml CONFIG REQUIRED)
 find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED) 
 
 # Add a CMake option to enable or disable Tracy Profiler
 option(USE_TRACY "Use Tracy Profiler" OFF)
@@ -38,13 +41,6 @@ if (USE_TRACY)
     target_link_libraries(Physics PRIVATE tracyClient)
 endif()
 
-# Renderer for future direct x
-file(GLOB_RECURSE RENDERER_FILES Renderer/include/*.h Renderer/src/*.cpp)
-add_library(Renderer ${RENDERER_FILES})
-set_target_properties(Renderer PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(Renderer PUBLIC Renderer/include/)
-target_include_directories(Renderer PUBLIC Common/include/)
-
 # Sample library
 file(GLOB_RECURSE SAMPLE_FILES samples/include/*.h samples/src/*.cpp)
 add_library(Samples ${SAMPLE_FILES})
@@ -52,6 +48,15 @@ set_target_properties(Samples PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(Samples PUBLIC samples/include)
 target_include_directories(Samples PUBLIC Physics/include/)
 target_include_directories(Samples PUBLIC Common/include/)
+
+# Renderer for future direct x (actually opengl using glut testing)
+file(GLOB_RECURSE RENDERER_FILES Renderer/include/*.h Renderer/src/*.cpp)
+add_library(Renderer ${RENDERER_FILES})
+set_target_properties(Renderer PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(Renderer PUBLIC Renderer/include/)
+target_include_directories(Renderer PUBLIC Common/include/)
+
+target_link_libraries(Renderer PUBLIC Samples GLUT::GLUT GLEW::GLEW OpenGL::GL)
 
 # SFML rendering temporary
 file(GLOB_RECURSE GRAPHICS_FILES SFML/include/*.h SFML/src/*.cpp)
@@ -71,4 +76,4 @@ endif()
 
 # Main
 add_executable(Main Main.cpp)
-target_link_libraries(Main PUBLIC Graphics)
+target_link_libraries(Main PUBLIC Graphics Renderer)

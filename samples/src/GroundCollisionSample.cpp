@@ -62,7 +62,7 @@ void GroundCollisionSample::SampleUpdate() noexcept {
         AllGraphicsData[i].Shape =
             std::get<CircleF>(shape) + col.BodyPosition;
         break;
-      case static_cast<int>(ShapeType::Rectangle):
+      case static_cast<int>(ShapeType::Rectangleee):
         if (i != 0) {
           _world.GetBody(col.BodyRef).ApplyForce({0, SPEED});
         }

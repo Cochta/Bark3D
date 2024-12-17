@@ -268,7 +268,7 @@ void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
 
 #ifdef TRACY_ENABLE
 	ZoneScoped;
-	/*static constexpr const char* names[] = { "Circle", "Rectangle", "Polygon", "None" };
+	/*static constexpr const char* names[] = { "Circle", "Rectangleee", "Polygon", "None" };
 	const auto log = fmt::format("Shape A: {}, Shape B: {}", names[static_cast<int>(ShapeA)], names[static_cast<int>(ShapeB)]);
 	ZoneText(log.data(), log.size());*/
 #endif
@@ -282,19 +282,19 @@ void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
 		{
 		case ShapeType::Circle:
 			return Intersect(circle, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Rectangle:
+		case ShapeType::Rectangleee:
 			return Intersect(circle, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
-	case ShapeType::Rectangle:
+	case ShapeType::Rectangleee:
 	{
 		RectangleF rect = std::get<RectangleF>(colA.Shape) + GetBody(colA.BodyRef).Position;
 		switch (ShapeB)
 		{
 		case ShapeType::Circle:
 			return Intersect(rect, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Rectangle:
+		case ShapeType::Rectangleee:
 			return Intersect(rect, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
