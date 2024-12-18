@@ -26,7 +26,7 @@ private:
 public:
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */
-	QuadTree QuadTree{ _heapAlloc };/**< QuadTree for collision checks */
+	BVH BVH{ _heapAlloc };/**< BVH for collision checks */
 	/**
 	 * @brief Default constructor for the _world class.
 	 */
@@ -103,14 +103,14 @@ private:
 	void UpdateBodies(const float deltaTime) noexcept;
 
 	/**
-	 * @brief Initialisation of the QuadTree.
+	 * @brief Initialisation of the BVH.
 	 */
 	void SetUpQuadTree() noexcept;
 	/**
-	 * @brief recursive update of the QuadTree.
+	 * @brief recursive update of the BVH.
 	 * @param node the root node
 	 */
-	void UpdateQuadTreeCollisions(const QuadNode& node)noexcept;
+	void UpdateQuadTreeCollisions(const BVHNode& node)noexcept;
 
 	/**
 	 * @brief Check if two colliders overlap.

@@ -30,14 +30,14 @@ void BouncingCollisionSample::OnCollisionExit(ColliderRef col1, ColliderRef col2
 void BouncingCollisionSample::SampleSetUp() noexcept
 {
 	_world.SetContactListener(this);
-	_nbObjects = CIRCLE_NBR + RECTANGLE_NBR;
+	_nbObjects = sphere_NBR + cuboid_NBR;
 	_collisionNbrPerCollider.resize(_nbObjects, 0);
 	AllGraphicsData.reserve(_nbObjects);
 	_bodyRefs.reserve(_nbObjects);
 	_colRefs.reserve(_nbObjects);
 
-	//Create Circles
-	for (std::size_t i = 0; i < CIRCLE_NBR; ++i)
+	//Create spheres
+	for (std::size_t i = 0; i < sphere_NBR; ++i)
 	{
 		auto bodyRef1 = _world.CreateBody();
 		_bodyRefs.push_back(bodyRef1);
@@ -45,52 +45,50 @@ void BouncingCollisionSample::SampleSetUp() noexcept
 
 		body1.Mass = 1;
 
-		body1.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0, 0), SPEED);
+		body1.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0), SPEED);
 
 
-		body1.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-						  Random::Range(100.f, Metrics::Height - 100.f) };
+		body1.Position = { Random::Range(-100.f, 100.f), Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f) };
 
 		auto colRef1 = _world.CreateCollider(bodyRef1);
 		_colRefs.push_back(colRef1);
 		auto& col1 = _world.GetCollider(colRef1);
-		col1.Shape = Circle(XMVectorZero(), CIRCLE_RADIUS);
+		col1.Shape = Sphere(XMVectorZero(), sphere_RADIUS);
 		col1.BodyPosition = body1.Position;
 
 		GraphicsData bd;
-		bd.Shape = Circle(XMVectorZero(), CIRCLE_RADIUS) + body1.Position;
+		bd.Shape = Sphere(XMVectorZero(), sphere_RADIUS) + body1.Position;
 		AllGraphicsData.push_back(bd);
 	}
 
-	//Create Rectangles
-	for (std::size_t i = 0; i < RECTANGLE_NBR; ++i)
+	//Create cuboids
+	for (std::size_t i = 0; i < cuboid_NBR; ++i)
 	{
 		auto bodyRef1 = _world.CreateBody();
 		_bodyRefs.push_back(bodyRef1);
 		auto& body1 = _world.GetBody(bodyRef1);
 
-		body1.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0, 0), SPEED);
+		body1.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0), SPEED);
 
-		body1.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-						  Random::Range(100.f, Metrics::Height - 100.f) };
+		body1.Position = { Random::Range(-100.f, 100.f), Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f) };
 
 		auto colRef1 = _world.CreateCollider(bodyRef1);
 		_colRefs.push_back(colRef1);
 		auto& col1 = _world.GetCollider(colRef1);
-		col1.Shape = RectangleF(XMVectorZero(), RECTANGLE_BOUNDS);
+		col1.Shape = CuboidF(XMVectorZero(), cuboid_BOUNDS);
 		col1.BodyPosition = body1.Position;
 
 		GraphicsData bd;
-		bd.Shape = RectangleF(XMVectorZero(), RECTANGLE_BOUNDS) + body1.Position;
+		bd.Shape = CuboidF(XMVectorZero(), cuboid_BOUNDS) + body1.Position;
 		AllGraphicsData.push_back(bd);
 	}
 }
 
-void BouncingCollisionSample::DrawQuadtree(const QuadNode& node) noexcept
+void BouncingCollisionSample::DrawQuadtree(const BVHNode& node) noexcept
 {
 	if (node.Children[0] == nullptr)
 	{
-		_quadTreeGraphicsData.push_back({ RectangleF(node.Bounds), false });
+		_quadTreeGraphicsData.push_back({ CuboidF(node.Bounds), false });
 	}
 	else
 	{
@@ -114,38 +112,46 @@ void BouncingCollisionSample::SampleUpdate() noexcept
 		auto bounds = col.GetBounds();
 		auto& body = _world.GetBody(col.BodyRef);
 
-		if (XMVectorGetX(bounds.MinBound()) <= 0)
+		if (XMVectorGetX(bounds.MinBound()) <= -100)
 		{
 			body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
 		}
-		else if (XMVectorGetX(bounds.MaxBound()) >= Metrics::Width)
+		else if (XMVectorGetX(bounds.MaxBound()) >= 100)
 		{
 			body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
 		}
-		if (XMVectorGetY(bounds.MinBound()) <= 0)
+		if (XMVectorGetY(bounds.MinBound()) <= -100)
 		{
 			body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
 		}
-		else if (XMVectorGetY(bounds.MaxBound()) >= Metrics::Height)
+		else if (XMVectorGetY(bounds.MaxBound()) >= 100)
 		{
 			body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
+		}
+		if (XMVectorGetZ(bounds.MinBound()) <= -100)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
+		}
+		else if (XMVectorGetZ(bounds.MaxBound()) >= 100)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
 		}
 
 		auto& shape = _world.GetCollider(_colRefs[i]).Shape;
 
 		switch (shape.index())
 		{
-		case static_cast<int>(ShapeType::Circle):
-			AllGraphicsData[i].Shape = std::get<CircleF>(shape) + col.BodyPosition;
+		case static_cast<int>(ShapeType::Sphere):
+			AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
 			break;
-		case static_cast<int>(ShapeType::Rectangleee):
-			AllGraphicsData[i].Shape = std::get<RectangleF>(shape) + col.BodyPosition;
+		case static_cast<int>(ShapeType::Cuboid):
+			AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
 			break;
 		}
 	}
 
 	_quadTreeGraphicsData.clear();
-	DrawQuadtree(_world.QuadTree.Nodes[0]);
+	DrawQuadtree(_world.BVH.Nodes[0]);
 	AllGraphicsData.insert(AllGraphicsData.end(), _quadTreeGraphicsData.begin(), _quadTreeGraphicsData.end());
 }
 

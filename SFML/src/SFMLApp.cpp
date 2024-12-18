@@ -123,59 +123,59 @@ void SFMLApp::Run() noexcept {
 	}
 }
 
-void SFMLApp::DrawCircle(const XMVECTOR center, const float radius,
+void SFMLApp::DrawSphere(const XMVECTOR center, const float radius,
 	const int segments, const sf::Color& col) noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
 
-	sf::CircleShape circle = sf::CircleShape(radius, segments);
-	circle.setFillColor(col);
-	circle.setOrigin(radius, radius);
-	circle.setPosition(XMVectorGetX(center), XMVectorGetY(center));
+	sf::CircleShape sphere = sf::CircleShape(radius, segments);
+	sphere.setFillColor(col);
+	sphere.setOrigin(radius, radius);
+	sphere.setPosition(XMVectorGetX(center), XMVectorGetY(center));
 
-	_window.draw(circle);
+	_window.draw(sphere);
 }
 
-void SFMLApp::DrawRectangle(const XMVECTOR minBound,
+void SFMLApp::Drawcuboid(const XMVECTOR minBound,
 	const XMVECTOR maxBound,
 	const sf::Color& col) noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
 
-	// Calculate the width and height of the rectangle
+	// Calculate the width and height of the cuboid
 	float width = XMVectorGetX(maxBound) - XMVectorGetX(minBound);
 	float height = XMVectorGetY(maxBound) - XMVectorGetY(minBound);
 
-	// Create an SFML rectangle shape
-	sf::RectangleShape rectangle(sf::Vector2f(width, height));
+	// Create an SFML cuboid shape
+	sf::RectangleShape cuboid(sf::Vector2f(width, height));
 
-	// Set the position and color of the rectangle
-	rectangle.setPosition(XMVectorGetX(minBound), XMVectorGetY(minBound));
-	rectangle.setFillColor(col);
+	// Set the position and color of the cuboid
+	cuboid.setPosition(XMVectorGetX(minBound), XMVectorGetY(minBound));
+	cuboid.setFillColor(col);
 
-	// Draw the rectangle to the window
-	_window.draw(rectangle);
+	// Draw the cuboid to the window
+	_window.draw(cuboid);
 }
 
-void SFMLApp::DrawRectangleBorder(const XMVECTOR minBound, const XMVECTOR maxBound,
+void SFMLApp::DrawcuboidBorder(const XMVECTOR minBound, const XMVECTOR maxBound,
 	const sf::Color& col) noexcept {
-	// Calculate the width and height of the rectangle
+	// Calculate the width and height of the cuboid
 	float width = XMVectorGetX(maxBound) - XMVectorGetX(minBound);
 	float height = XMVectorGetY(maxBound) - XMVectorGetY(minBound);
 
-	// Create an SFML rectangle shape
-	sf::RectangleShape rectangle(sf::Vector2f(width, height));
+	// Create an SFML cuboid shape
+	sf::RectangleShape cuboid(sf::Vector2f(width, height));
 
-	// Set the position and color of the rectangle
-	rectangle.setPosition(XMVectorGetX(minBound), XMVectorGetY(minBound));
-	rectangle.setOutlineColor(col);
-	rectangle.setOutlineThickness(1);
-	rectangle.setFillColor(sf::Color::Transparent);
+	// Set the position and color of the cuboid
+	cuboid.setPosition(XMVectorGetX(minBound), XMVectorGetY(minBound));
+	cuboid.setOutlineColor(col);
+	cuboid.setOutlineThickness(1);
+	cuboid.setFillColor(sf::Color::Transparent);
 
-	// Draw the rectangle to the window
-	_window.draw(rectangle);
+	// Draw the cuboid to the window
+	_window.draw(cuboid);
 }
 
 void SFMLApp::DrawAllGraphicsData() noexcept {
@@ -183,25 +183,25 @@ void SFMLApp::DrawAllGraphicsData() noexcept {
 	ZoneScoped;
 #endif
 	for (auto& bd : _sampleManager.GetSampleData()) {
-		if (bd.Shape.index() == (int)ShapeType::Circle) {
-			auto& circle = std::get<CircleF>(bd.Shape);
-			DrawCircle(circle.Center(), circle.Radius(), 30,
+		if (bd.Shape.index() == (int)ShapeType::Sphere) {
+			auto& sphere = std::get<SphereF>(bd.Shape);
+			DrawSphere(sphere.Center(), sphere.Radius(), 30,
 				{ static_cast<sf::Uint8>(bd.Color.r),
 				 static_cast<sf::Uint8>(bd.Color.g),
 				 static_cast<sf::Uint8>(bd.Color.b),
 				 static_cast<sf::Uint8>(bd.Color.a) });
 		}
-		else if (bd.Shape.index() == (int)ShapeType::Rectangleee) {
-			auto& rect = std::get<RectangleF>(bd.Shape);
+		else if (bd.Shape.index() == (int)ShapeType::Cuboid) {
+			auto& rect = std::get<CuboidF>(bd.Shape);
 			if (!bd.Filled) {
-				DrawRectangleBorder(rect.MinBound(), rect.MaxBound(),
+				DrawcuboidBorder(rect.MinBound(), rect.MaxBound(),
 					{ static_cast<sf::Uint8>(bd.Color.r),
 					 static_cast<sf::Uint8>(bd.Color.g),
 					 static_cast<sf::Uint8>(bd.Color.b),
 					 static_cast<sf::Uint8>(bd.Color.a) });
 			}
 			else {
-				DrawRectangle(rect.MinBound(), rect.MaxBound(),
+				Drawcuboid(rect.MinBound(), rect.MaxBound(),
 					{ static_cast<sf::Uint8>(bd.Color.r),
 					 static_cast<sf::Uint8>(bd.Color.g),
 					 static_cast<sf::Uint8>(bd.Color.b),

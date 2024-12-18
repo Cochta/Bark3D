@@ -4,15 +4,15 @@ void Contact::Resolve()
 {
 	switch (CollidingBodies[0].collider->Shape.index())
 	{
-	case static_cast<int>(ShapeType::Circle):
+	case static_cast<int>(ShapeType::Sphere):
 		switch (CollidingBodies[1].collider->Shape.index())
 		{
-		case static_cast<int>(ShapeType::Circle):
+		case static_cast<int>(ShapeType::Sphere):
 		{
-			const CircleF& circle0 = std::get<CircleF>(CollidingBodies[0].collider->Shape);
-			const CircleF& circle1 = std::get<CircleF>(CollidingBodies[1].collider->Shape);
+			const SphereF& sphere0 = std::get<SphereF>(CollidingBodies[0].collider->Shape);
+			const SphereF& sphere1 = std::get<SphereF>(CollidingBodies[1].collider->Shape);
 
-			const auto delta = XMVectorSubtract(XMVectorSubtract(XMVectorAdd(CollidingBodies[0].body->Position, circle0.Center()), CollidingBodies[1].body->Position), circle1.Center());
+			const auto delta = XMVectorSubtract(XMVectorSubtract(XMVectorAdd(CollidingBodies[0].body->Position, sphere0.Center()), CollidingBodies[1].body->Position), sphere1.Center());
 
 			float length = XMVectorGetX(XMVector3Length(delta));
 
@@ -24,41 +24,46 @@ void Contact::Resolve()
 			{
 				Normal = g_XMIdentityR1; // vector up
 			}
-			Penetration = std::get<CircleF>(CollidingBodies[0].collider->Shape).Radius() +
-				std::get<CircleF>(CollidingBodies[1].collider->Shape).Radius() - length;
+			Penetration = std::get<SphereF>(CollidingBodies[0].collider->Shape).Radius() +
+				std::get<SphereF>(CollidingBodies[1].collider->Shape).Radius() - length;
 		}
 		break;
-		case static_cast<int>(ShapeType::Rectangleee):
+		case static_cast<int>(ShapeType::Cuboid):
 		{
-			const CircleF& circle = std::get<CircleF>(CollidingBodies[0].collider->Shape);
-			const RectangleF& rectangle = std::get<RectangleF>(CollidingBodies[1].collider->Shape);
+			const SphereF& sphere = std::get<SphereF>(CollidingBodies[0].collider->Shape);
+			const CuboidF& cuboid = std::get<CuboidF>(CollidingBodies[1].collider->Shape);
 
 
 
 			auto closestX = Clamp(
-				XMVectorGetX(CollidingBodies[0].body->Position) + XMVectorGetX(circle.Center()),
-				XMVectorGetX(rectangle.MinBound()) + XMVectorGetX(CollidingBodies[1].body->Position),
-				XMVectorGetX(rectangle.MaxBound()) + XMVectorGetX(CollidingBodies[1].body->Position)
+				XMVectorGetX(CollidingBodies[0].body->Position) + XMVectorGetX(sphere.Center()),
+				XMVectorGetX(cuboid.MinBound()) + XMVectorGetX(CollidingBodies[1].body->Position),
+				XMVectorGetX(cuboid.MaxBound()) + XMVectorGetX(CollidingBodies[1].body->Position)
 			);
 
 			auto closestY = Clamp(
-				XMVectorGetY(CollidingBodies[0].body->Position) + XMVectorGetY(circle.Center()),
-				XMVectorGetY(rectangle.MinBound()) + XMVectorGetY(CollidingBodies[1].body->Position),
-				XMVectorGetY(rectangle.MaxBound()) + XMVectorGetY(CollidingBodies[1].body->Position)
+				XMVectorGetY(CollidingBodies[0].body->Position) + XMVectorGetY(sphere.Center()),
+				XMVectorGetY(cuboid.MinBound()) + XMVectorGetY(CollidingBodies[1].body->Position),
+				XMVectorGetY(cuboid.MaxBound()) + XMVectorGetY(CollidingBodies[1].body->Position)
+			);
+			auto closestZ = Clamp(
+				XMVectorGetZ(CollidingBodies[0].body->Position) + XMVectorGetZ(sphere.Center()),
+				XMVectorGetZ(cuboid.MinBound()) + XMVectorGetZ(CollidingBodies[1].body->Position),
+				XMVectorGetZ(cuboid.MaxBound()) + XMVectorGetZ(CollidingBodies[1].body->Position)
 			);
 
-			const XMVECTOR closest = XMVectorSet(closestX, closestY, 0, 0);
+			const XMVECTOR closest = XMVectorSet(closestX, closestY, closestZ, 0);
 
-			//const XMVECTOR delta = CollidingBodies[0].body->Position + circle.Center() - closest;
+			//const XMVECTOR delta = CollidingBodies[0].body->Position + sphere.Center() - closest;
 
 			XMVECTOR delta = XMVectorSubtract(
-				XMVectorAdd(CollidingBodies[0].body->Position, circle.Center()),
+				XMVectorAdd(CollidingBodies[0].body->Position, sphere.Center()),
 				closest
 			);
 
 			const float distance = XMVectorGetX(XMVector3Length(delta));
 
-			Penetration = circle.Radius() - distance;
+			Penetration = sphere.Radius() - distance;
 
 			if (distance > 0.f)
 			{
@@ -73,33 +78,47 @@ void Contact::Resolve()
 		break;
 		}
 		break;
-	case static_cast<int>(ShapeType::Rectangleee):
+	case static_cast<int>(ShapeType::Cuboid):
 		switch (CollidingBodies[1].collider->Shape.index())
 		{
-		case static_cast<int>(ShapeType::Circle):
+		case static_cast<int>(ShapeType::Sphere):
 		{
 			std::swap(CollidingBodies[0], CollidingBodies[1]);
 			Resolve();
 		}
 		break;
-		case static_cast<int>(ShapeType::Rectangleee):
+		case static_cast<int>(ShapeType::Cuboid):
 		{
-			const RectangleF& rect0 = std::get<RectangleF>(CollidingBodies[0].collider->Shape);
-			const RectangleF& rect1 = std::get<RectangleF>(CollidingBodies[1].collider->Shape);
+			const CuboidF& cuboid0 = std::get<CuboidF>(CollidingBodies[0].collider->Shape);
+			const CuboidF& cuboid1 = std::get<CuboidF>(CollidingBodies[1].collider->Shape);
 
-			const auto delta = XMVectorSubtract(XMVectorSubtract(XMVectorAdd(CollidingBodies[0].body->Position, rect0.Center()), CollidingBodies[1].body->Position), rect1.Center());
+			// Calculate delta vector between the centers of the two cuboids
+			const auto delta = XMVectorSubtract(
+				XMVectorSubtract(
+					XMVectorAdd(CollidingBodies[0].body->Position, cuboid0.Center()),
+					CollidingBodies[1].body->Position
+				),
+				cuboid1.Center()
+			);
 
-			const XMVECTOR penetration = XMVectorSubtract(XMVectorAdd(std::get<RectangleF>(CollidingBodies[0].collider->Shape).HalfSize(), std::get<RectangleF>(CollidingBodies[1].collider->Shape).HalfSize()), XMVectorAbs(delta));
+			// Calculate the penetration depth along each axis (x, y, z)
+			const XMVECTOR penetration = XMVectorSubtract(
+				XMVectorAdd(cuboid0.HalfSize(), cuboid1.HalfSize()),
+				XMVectorAbs(delta)
+			);
 
-			if (XMVectorGetX(penetration) < XMVectorGetY(penetration))
-			{
+			// Find the smallest penetration axis (x, y, or z)
+			if (XMVectorGetX(penetration) < XMVectorGetY(penetration) && XMVectorGetX(penetration) < XMVectorGetZ(penetration)) {
 				Penetration = XMVectorGetX(penetration);
-				Normal = (XMVectorGetX(delta) > 0) ? XMVectorSet(1.0f, 0.0f, 0, 0) : XMVectorSet(-1.0f, 0.0f, 0, 0);
+				Normal = (XMVectorGetX(delta) > 0) ? XMVectorSet(1.0f, 0.0f, 0.0f, 0) : XMVectorSet(-1.0f, 0.0f, 0.0f, 0);
 			}
-			else
-			{
+			else if (XMVectorGetY(penetration) < XMVectorGetZ(penetration)) {
 				Penetration = XMVectorGetY(penetration);
-				Normal = (XMVectorGetY(delta) > 0) ? XMVectorSet(0.0f, 1.0f, 0, 0) : XMVectorSet(0.0f, -1.0f, 0, 0);
+				Normal = (XMVectorGetY(delta) > 0) ? XMVectorSet(0.0f, 1.0f, 0.0f, 0) : XMVectorSet(0.0f, -1.0f, 0.0f, 0);
+			}
+			else {
+				Penetration = XMVectorGetZ(penetration);
+				Normal = (XMVectorGetZ(delta) > 0) ? XMVectorSet(0.0f, 0.0f, 1.0f, 0) : XMVectorSet(0.0f, 0.0f, -1.0f, 0);
 			}
 		}
 		break;

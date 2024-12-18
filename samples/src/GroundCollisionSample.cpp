@@ -5,8 +5,8 @@ std::string GroundCollisionSample::GetName() noexcept {
 }
 
 std::string GroundCollisionSample::GetDescription() noexcept {
-  return "CONTROLS: Left click to create a circle, right click to create a "
-         "rectangle.\n\nFloor has 1 x bounciness, Circles and rectangles have "
+  return "CONTROLS: Left click to create a sphere, right click to create a "
+         "cuboid.\n\nFloor has 1 x bounciness, spheres and cuboids have "
          "0 x bounciness";
 }
 
@@ -19,7 +19,7 @@ void GroundCollisionSample::OnCollisionExit(ColliderRef col1,
 void GroundCollisionSample::SampleSetUp() noexcept {
   _world.SetContactListener(this);
 
-  // Create static rectangle
+  // Create static cuboid
   const auto groundRef = _world.CreateBody();
   _bodyRefs.push_back(groundRef);
   auto& groundBody = _world.GetBody(groundRef);
@@ -37,7 +37,7 @@ void GroundCollisionSample::SampleSetUp() noexcept {
   _colRefs.push_back(groundColRef);
   auto& groundCol = _world.GetCollider(groundColRef);
   groundCol.Shape =
-      RectangleF({-Metrics::Width / 3.f, 0.f},
+      CuboidF({-Metrics::Width / 3.f, 0.f},
                        {Metrics::Width / 3.f, Metrics::MetersToPixels(0.2f)});
   groundCol.BodyPosition = groundBody.Position;
   groundCol.Restitution = 1.f;
@@ -57,17 +57,17 @@ void GroundCollisionSample::SampleUpdate() noexcept {
     const auto& shape = _world.GetCollider(_colRefs[i]).Shape;
 
     switch (shape.index()) {
-      case static_cast<int>(ShapeType::Circle):
+      case static_cast<int>(ShapeType::Sphere):
         _world.GetBody(col.BodyRef).ApplyForce({0, SPEED});
         AllGraphicsData[i].Shape =
-            std::get<CircleF>(shape) + col.BodyPosition;
+            std::get<SphereF>(shape) + col.BodyPosition;
         break;
-      case static_cast<int>(ShapeType::Rectangleee):
+      case static_cast<int>(ShapeType::Cuboid):
         if (i != 0) {
           _world.GetBody(col.BodyRef).ApplyForce({0, SPEED});
         }
         AllGraphicsData[i].Shape =
-            std::get<RectangleF>(shape) + col.BodyPosition;
+            std::get<CuboidF>(shape) + col.BodyPosition;
         break;
       default:
         break;
@@ -78,21 +78,21 @@ void GroundCollisionSample::SampleUpdate() noexcept {
 void GroundCollisionSample::SampleTearDown() noexcept {}
 
 void GroundCollisionSample::CreateBall(XMVECTOR position) noexcept {
-  const auto circleBodyRef = _world.CreateBody();
-  _bodyRefs.push_back(circleBodyRef);
-  auto& circleBody = _world.GetBody(circleBodyRef);
+  const auto sphereBodyRef = _world.CreateBody();
+  _bodyRefs.push_back(sphereBodyRef);
+  auto& sphereBody = _world.GetBody(sphereBodyRef);
 
-  circleBody.Mass = 1;
+  sphereBody.Mass = 1;
 
-  circleBody.Position = position;
+  sphereBody.Position = position;
 
-  const auto circleColRef = _world.CreateCollider(circleBodyRef);
-  _colRefs.push_back(circleColRef);
-  auto& circleCol = _world.GetCollider(circleColRef);
-  circleCol.Shape =
-      Circle(XMVectorZero(), Random::Range(10.f, 40.f));
-  circleCol.BodyPosition = circleBody.Position;
-  circleCol.Restitution = 0.f;
+  const auto sphereColRef = _world.CreateCollider(sphereBodyRef);
+  _colRefs.push_back(sphereColRef);
+  auto& sphereCol = _world.GetCollider(sphereColRef);
+  sphereCol.Shape =
+      Sphere(XMVectorZero(), Random::Range(10.f, 40.f));
+  sphereCol.BodyPosition = sphereBody.Position;
+  sphereCol.Restitution = 0.f;
 
   GraphicsData gd;
   gd.Color = {Random::Range(0, 255), Random::Range(0, 255),
@@ -112,7 +112,7 @@ void GroundCollisionSample::CreateRect(XMVECTOR position) noexcept {
   const auto rectColRef = _world.CreateCollider(rectBodyRef);
   _colRefs.push_back(rectColRef);
   auto& rectCol = _world.GetCollider(rectColRef);
-  rectCol.Shape = RectangleF({-Random::Range(1.f, 4.f) * 10.f,
+  rectCol.Shape = CuboidF({-Random::Range(1.f, 4.f) * 10.f,
                                     -Random::Range(1.f, 4.f) * 10.f},
                                    {Random::Range(1.f, 4.f) * 10.f,
                                     Random::Range(1.f, 4.f) * 10.f});

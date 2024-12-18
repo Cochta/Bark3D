@@ -1,26 +1,26 @@
 #include "QuadTree.h"
 
-QuadNode::QuadNode(Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{alloc})
+BVHNode::BVHNode(Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{alloc})
 {
 	ColliderRefAabbs.reserve(16);
 }
 
-QuadNode::QuadNode(const RectangleF& bounds, Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{ alloc }), Bounds(bounds)
+BVHNode::BVHNode(const CuboidF& bounds, Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{ alloc }), Bounds(bounds)
 {
 	ColliderRefAabbs.reserve(16);
 }
 
-QuadTree::QuadTree(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<QuadNode>{alloc} }
+BVH::BVH(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<BVHNode>{alloc} }
 {
 	std::size_t result = 0;
 	for (size_t i = 0; i <= MAX_DEPTH; i++)
 	{
 		result += Pow(4, i);
 	}
-	Nodes.resize(result, QuadNode(_alloc));
+	Nodes.resize(result, BVHNode(_alloc));
 }
 
-void QuadTree::SubdivideNode(QuadNode& node) noexcept
+void BVH::SubdivideNode(BVHNode& node) noexcept
 {
 	const XMVECTOR halfSize = XMVectorDivide(XMVectorSubtract(node.Bounds.MaxBound(), node.Bounds.MinBound()), XMVectorSet(2, 2, 2, 2));
 	const XMVECTOR minBound = node.Bounds.MinBound();
@@ -48,7 +48,7 @@ void QuadTree::SubdivideNode(QuadNode& node) noexcept
 	_nodeIndex += 4;
 }
 
-void QuadTree::Insert(QuadNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
+void BVH::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
 {
 	if (node.Children[0] != nullptr)
 	{
@@ -82,7 +82,7 @@ void QuadTree::Insert(QuadNode& node, const ColliderRefAabb& colliderRefAabb) no
 	}
 }
 
-void QuadTree::SetUpRoot(const RectangleF& bounds) noexcept
+void BVH::SetUpRoot(const CuboidF& bounds) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;

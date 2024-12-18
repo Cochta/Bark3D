@@ -33,11 +33,11 @@ public:
 	void Run() noexcept;
 
 private:
-	void DrawCircle(XMVECTOR center, float radius, int segments, const sf::Color& col) noexcept;
+	void DrawSphere(XMVECTOR center, float radius, int segments, const sf::Color& col) noexcept;
 
-	void DrawRectangle(XMVECTOR minBound, XMVECTOR maxBound, const sf::Color& col) noexcept;
+	void Drawcuboid(XMVECTOR minBound, XMVECTOR maxBound, const sf::Color& col) noexcept;
 
-	void DrawRectangleBorder(XMVECTOR minBound, XMVECTOR maxBound, const sf::Color& col) noexcept;
+	void DrawcuboidBorder(XMVECTOR minBound, XMVECTOR maxBound, const sf::Color& col) noexcept;
 
 	void DrawAllGraphicsData() noexcept;
 };

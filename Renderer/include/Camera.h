@@ -10,7 +10,7 @@ public:
 	// actual vector representing the camera's direction
 	float lx = 0.0f, lz = -1.0f;
 	// XZ position of the camera
-	float x = 0.0f, z = 5.0f;
+	float x = 0.0f, z = 50.0f;
 	// the key states. These variables will be zero
 	//when no key is being presses
 	float deltaAngle = 0.0f;

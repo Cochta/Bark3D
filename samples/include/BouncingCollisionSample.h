@@ -11,12 +11,12 @@ private:
 	std::vector<GraphicsData> _quadTreeGraphicsData;
 	std::vector<int> _collisionNbrPerCollider;
 
-	static constexpr XMVECTOR RECTANGLE_BOUNDS = { Metrics::MetersToPixels(0.6f), Metrics::MetersToPixels(0.6f) };
-	static constexpr float CIRCLE_RADIUS = Metrics::MetersToPixels(0.3f);
-	static constexpr float SPEED = 200;
+	static constexpr XMVECTOR cuboid_BOUNDS = { Metrics::MetersToPixels(0.15f), Metrics::MetersToPixels(0.15f), Metrics::MetersToPixels(0.15f) };
+	static constexpr float sphere_RADIUS = Metrics::MetersToPixels(0.1f);
+	static constexpr float SPEED = 100;
 
-	static constexpr std::size_t CIRCLE_NBR = 20;
-	static constexpr std::size_t RECTANGLE_NBR = 20;
+	static constexpr std::size_t sphere_NBR = 20;
+	static constexpr std::size_t cuboid_NBR = 20;
 
 	std::size_t _nbObjects{};
 
@@ -40,6 +40,6 @@ protected:
 	void SampleTearDown() noexcept override;
 
 private:
-	void DrawQuadtree(const QuadNode& node) noexcept;
+	void DrawQuadtree(const BVHNode& node) noexcept;
 
 };

@@ -19,8 +19,8 @@
 class Collider
 {
 public:
-	std::variant<CircleF, RectangleF> Shape{
-			CircleF(XMVectorZero(), 1) }; /**< The shape associated with the collider. */
+	std::variant<SphereF, CuboidF> Shape{
+			SphereF(XMVectorZero(), 1) }; /**< The shape associated with the collider. */
 
 	BodyRef BodyRef; /**< Reference to the body associated with the collider. */
 
@@ -31,7 +31,7 @@ public:
 	bool IsTrigger = false; /**< Flag indicating if the collider is a trigger (non-physical). */
 	bool IsAttached = false; /**< Flag indicating if the collider is attached to a body. */
 
-	[[nodiscard]] RectangleF GetBounds() const noexcept;
+	[[nodiscard]] CuboidF GetBounds() const noexcept;
 };
 
 /**

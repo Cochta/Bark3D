@@ -17,11 +17,11 @@ void StarSystemSample::SampleSetUp() noexcept
 		auto& sun = _world.GetBody(_sunRef);
 		//sun.Position = { static_cast<float>(Metrics::Width) / 2, static_cast<float>(Metrics::Height) / 2 };
 		sun.Position = { 0, 0, 0 };
-		sun.Mass = 1000;
+		sun.Mass = 5000;
 
 		_bodyRefs.push_back(_sunRef);
 		GraphicsData sgd;
-		_circles.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.05f));
+		_spheres.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.05f));
 		sgd.Color = { 255, 255, 0, 255 };
 		AllGraphicsData.push_back(sgd);
 
@@ -31,22 +31,28 @@ void StarSystemSample::SampleSetUp() noexcept
 			auto bodyRef = _world.CreateBody();
 			auto& body = _world.GetBody(bodyRef);
 			//body.Position = { Random::Range(100.f, Metrics::Width - 100.f),Random::Range(100.f, Metrics::Height - 100.f) };
-			body.Position = { Random::Range(-50.f, 50.f),Random::Range(-50.f, 50.f), 0 };
+			body.Position = { Random::Range(-25.f, 25.f),Random::Range(-25.f, 25.f), Random::Range(-25.f, 25.f) };
 
 			auto r = XMVectorSubtract(_world.GetBody(_sunRef).Position, body.Position);
 			auto v = sqrt(G * (_world.GetBody(_sunRef).Mass / XMVectorGetX(XMVector3Length(r))));
-			body.Velocity = XMVectorScale(XMVector3Normalize(XMVectorSet(-XMVectorGetY(r), XMVectorGetX(r), 0, 0)), v);
 
-			//body.Velocity = XMVECTOR(-r.Y, r.X).Normalized() * v;
+			auto velocityDir = XMVector3Cross(r, XMVectorSet(0.f, 0.f, 1.f, 0.f)); // Cross product with an arbitrary vector (z-axis)
+			if (XMVector3Equal(XMVector3Length(velocityDir), XMVectorZero())) {
+				// Handle edge case: if `r` is parallel to the z-axis, choose a different axis for the cross product
+				velocityDir = XMVector3Cross(r, XMVectorSet(0.f, 1.f, 0.f, 0.f)); // Cross with y-axis
+			}
+			body.Velocity = XMVectorScale(XMVector3Normalize(velocityDir), v);
+			//body.Velocity = XMVectorScale(XMVector3Normalize(XMVectorSet(-XMVectorGetY(r), XMVectorGetX(r), 0, 0)), v);
+
 			body.Mass = 10.f;
 
 			// Graphics
 			_bodyRefs.push_back(bodyRef);
 			GraphicsData gd;
-			_circles.emplace_back(XMVectorZero(),
+			_spheres.emplace_back(XMVectorZero(),
 				Random::Range(
-					Metrics::MetersToPixels(0.005f),
-					Metrics::MetersToPixels(0.015f)));
+					Metrics::MetersToPixels(0.0025f),
+					Metrics::MetersToPixels(0.005f)));
 			gd.Color = {
 					Random::Range(0, 255),
 					Random::Range(0, 255),
@@ -80,7 +86,7 @@ void StarSystemSample::SampleUpdate() noexcept
 	{
 		auto& body = _world.GetBody(_bodyRefs[i]);
 
-		AllGraphicsData[i].Shape = _circles[i] + body.Position;
+		AllGraphicsData[i].Shape = _spheres[i] + body.Position;
 
 		if (_bodyRefs[i] == _sunRef) continue; // Skip the Sun
 
@@ -91,6 +97,6 @@ void StarSystemSample::SampleUpdate() noexcept
 
 void StarSystemSample::SampleTearDown() noexcept
 {
-	_circles.clear();
+	_spheres.clear();
 }
 

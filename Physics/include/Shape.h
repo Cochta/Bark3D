@@ -8,24 +8,24 @@ using namespace DirectX;
 
 enum class ShapeType
 {
-	Circle, Rectangleee, None
+	Sphere, Cuboid, None
 };
 
 template <typename T>
-class Circle
+class Sphere
 {
 public:
 	/**
-	 * @brief Construct a new Circle object
-	 * @param center Center of the circle, also the position of the circle
-	 * @param radius Radius of the circle, if negative, it will be converted to its positive value
+	 * @brief Construct a new Sphere object
+	 * @param center Center of the sphere, also the position of the sphere
+	 * @param radius Radius of the sphere, if negative, it will be converted to its positive value
 	 */
-	constexpr Circle(XMVECTOR center, T radius) noexcept : _center(center), _radius(Abs(radius)) {}
+	constexpr Sphere(XMVECTOR center, T radius) noexcept : _center(center), _radius(Abs(radius)) {}
 	/**
-	 * @brief Construct a new Circle object with a center in (0, 0)
-	 * @param radius Radius of the circle, if negative, it will be converted to its positive value
+	 * @brief Construct a new Sphere object with a center in (0, 0)
+	 * @param radius Radius of the sphere, if negative, it will be converted to its positive value
 	 */
-	constexpr explicit Circle(T radius) noexcept : _center(XMVECTOR::Zero()), _radius(Abs(radius)) {}
+	constexpr explicit Sphere(T radius) noexcept : _center(XMVECTOR::Zero()), _radius(Abs(radius)) {}
 
 private:
 	XMVECTOR _center = XMVectorZero();
@@ -39,9 +39,9 @@ public:
 	void SetRadius(T radius) noexcept { _radius = Abs(radius); }
 
 	/**
-	 * @brief Check if the circle contains a point
+	 * @brief Check if the sphere contains a point
 	 * @param point the point to check
-	 * @return true if the point is inside the circle, false otherwise
+	 * @return true if the point is inside the sphere, false otherwise
 	 */
 	 /*[[nodiscard]] bool Contains(XMVECTOR point) const
 	 {
@@ -49,7 +49,7 @@ public:
 	 }*/
 
 	[[nodiscard]] bool Contains(XMVECTOR point) const {
-		// Compute the vector difference between the circle's center and the point
+		// Compute the vector difference between the sphere's center and the point
 		XMVECTOR delta = XMVectorSubtract(_center, point);
 
 		// Calculate the squared distance (squared length of delta)
@@ -59,25 +59,25 @@ public:
 		return squaredDistance <= (_radius * _radius);
 	}
 
-	[[nodiscard]] constexpr Circle<T> operator+(const XMVECTOR& vec) const noexcept
+	[[nodiscard]] constexpr Sphere<T> operator+(const XMVECTOR& vec) const noexcept
 	{
-		return Circle<T>(XMVectorAdd(_center, vec), _radius);
+		return Sphere<T>(XMVectorAdd(_center, vec), _radius);
 	}
 };
 
-using CircleF = Circle<float>;
-using CircleI = Circle<int>;
+using SphereF = Sphere<float>;
+using sphereI = Sphere<int>;
 
 template <typename T>
-class Rectangleee
+class Cuboid
 {
 public:
 	/**
-	 * @brief Construct a new Rectangleee object
-	 * @param position the position of the rectangle
-	 * @param size the size of the rectangle
+	 * @brief Construct a new Cuboid object
+	 * @param position the position of the cuboid
+	 * @param size the size of the cuboid
 	 */
-	constexpr Rectangleee(XMVECTOR minBound, XMVECTOR maxBound) noexcept : _minBound(minBound), _maxBound(maxBound) {}
+	constexpr Cuboid(XMVECTOR minBound, XMVECTOR maxBound) noexcept : _minBound(minBound), _maxBound(maxBound) {}
 
 private:
 	XMVECTOR _minBound = XMVECTOR::Zero();
@@ -91,14 +91,15 @@ public:
 	void SetMaxBound(XMVECTOR maxBound) noexcept { _maxBound = maxBound; }
 
 	/**
-	 * @brief Check if the rectangle contains a point
+	 * @brief Check if the cuboid contains a point
 	 * @param point the point to check
-	 * @return true if the point is inside the rectangle, false otherwise
+	 * @return true if the point is inside the cuboid, false otherwise
 	 */
 	[[nodiscard]] bool Contains(XMVECTOR point) const
 	{
 		if (XMVectorGetX(_maxBound) < XMVectorGetX(point) || XMVectorGetX(_minBound) > XMVectorGetX(point)) return false;
 		if (XMVectorGetY(_maxBound) < XMVectorGetY(point) || XMVectorGetY(_minBound) > XMVectorGetY(point)) return false;
+		if (XMVectorGetZ(_maxBound) < XMVectorGetZ(point) || XMVectorGetZ(_minBound) > XMVectorGetZ(point)) return false;
 
 		return true;
 	}
@@ -118,69 +119,72 @@ public:
 		return XMVectorScale(XMVectorSubtract(_maxBound, _minBound), 0.5f);
 	}
 
-	[[nodiscard]] constexpr Rectangleee<T> operator+(const XMVECTOR& vec) const noexcept
+	[[nodiscard]] constexpr Cuboid<T> operator+(const XMVECTOR& vec) const noexcept
 	{
-		return Rectangleee<T>(XMVectorAdd(_minBound, vec), XMVectorAdd(_maxBound, vec));
+		return Cuboid<T>(XMVectorAdd(_minBound, vec), XMVectorAdd(_maxBound, vec));
 	}
 
-	[[nodiscard]] static constexpr Rectangleee<T> FromCenter(XMVECTOR center, XMVECTOR halfSize) noexcept
+	[[nodiscard]] static constexpr Cuboid<T> FromCenter(XMVECTOR center, XMVECTOR halfSize) noexcept
 	{
-		return Rectangleee<T>(XMVectorSubtract(center, halfSize), XMVectorAdd(center, halfSize));
+		return Cuboid<T>(XMVectorSubtract(center, halfSize), XMVectorAdd(center, halfSize));
 	}
 };
 
-using RectangleF = Rectangleee<float>;
-using RectangleI = Rectangleee<int>;
+using CuboidF = Cuboid<float>;
+using CuboidI = Cuboid<int>;
 
 // Intersect functions
 
 template<typename T>
-[[nodiscard]] constexpr bool Intersect(const Circle<T> circle1, const Circle<T> circle2) noexcept
+[[nodiscard]] constexpr bool Intersect(const Sphere<T> sphere1, const Sphere<T> sphere2) noexcept
 {
-	const T radiusSum = (circle1.Radius() + circle2.Radius()) * (circle1.Radius() + circle2.Radius());
+	const T radiusSum = (sphere1.Radius() + sphere2.Radius()) * (sphere1.Radius() + sphere2.Radius());
 
-	const T distanceBetweenCenters = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(circle1.Center(), circle2.Center())));
+	const T distanceBetweenCenters = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(sphere1.Center(), sphere2.Center())));
 	return distanceBetweenCenters <= radiusSum;
 }
 
 template<typename T>
-[[nodiscard]] constexpr bool Intersect(const Rectangleee<T> rectangle1, const Rectangleee<T> rectangle2) noexcept
+[[nodiscard]] constexpr bool Intersect(const Cuboid<T> cuboid1, const Cuboid<T> cuboid2) noexcept
 {
-	if (XMVectorGetX(rectangle1.MaxBound()) < XMVectorGetX(rectangle2.MinBound()) ||
-		XMVectorGetX(rectangle1.MinBound()) > XMVectorGetX(rectangle2.MaxBound()))
+	if (XMVectorGetX(cuboid1.MaxBound()) < XMVectorGetX(cuboid2.MinBound()) ||
+		XMVectorGetX(cuboid1.MinBound()) > XMVectorGetX(cuboid2.MaxBound()))
 		return false;
-	if (XMVectorGetY(rectangle1.MaxBound()) < XMVectorGetY(rectangle2.MinBound()) ||
-		XMVectorGetY(rectangle1.MinBound()) > XMVectorGetY(rectangle2.MaxBound()))
+	if (XMVectorGetY(cuboid1.MaxBound()) < XMVectorGetY(cuboid2.MinBound()) ||
+		XMVectorGetY(cuboid1.MinBound()) > XMVectorGetY(cuboid2.MaxBound()))
+		return false;
+	if (XMVectorGetZ(cuboid1.MaxBound()) < XMVectorGetZ(cuboid2.MinBound()) ||
+		XMVectorGetZ(cuboid1.MinBound()) > XMVectorGetZ(cuboid2.MaxBound()))
 		return false;
 
 	return true;
 }
 
 template <typename T>
-[[nodiscard]] constexpr bool Intersect(const Rectangleee<T> rectangle, const Circle<T> circle) noexcept
+[[nodiscard]] constexpr bool Intersect(const Cuboid<T> cuboid, const Sphere<T> sphere) noexcept
 {
-	const auto center = circle.Center();
+	const auto center = sphere.Center();
 
-	if (rectangle.Contains(center)) return true;
+	if (cuboid.Contains(center)) return true;
 
-	const auto minBound = rectangle.MinBound();
-	const auto maxBound = rectangle.MaxBound();
-	const auto radius = circle.Radius();
+	const auto minBound = cuboid.MinBound();
+	const auto maxBound = cuboid.MaxBound();
+	const auto radius = sphere.Radius();
 
 	const auto minBoundRect1 = XMVectorSubtract(minBound, XMVectorSet(radius, 0, 0, 0));
 	const auto minBoundRect2 = XMVectorSubtract(minBound, XMVectorSet(0, radius, 0, 0));
 	const auto maxBoundRect1 = XMVectorAdd(maxBound, XMVectorSet(radius, 0, 0, 0));
 	const auto maxBoundRect2 = XMVectorAdd(maxBound, XMVectorSet(0, radius, 0, 0));
 
-	// Added circle radius to rectangle bounds
-	const Rectangleee<T> rectangle1(minBoundRect1, maxBoundRect1);
-	const Rectangleee<T> rectangle2(minBoundRect2, maxBoundRect2);
+	// Added sphere radius to cuboid bounds
+	const Cuboid<T> cuboid1(minBoundRect1, maxBoundRect1);
+	const Cuboid<T> cuboid2(minBoundRect2, maxBoundRect2);
 
-	// Check rectangle bounds
-	if (rectangle1.Contains(center)) return true;
-	if (rectangle2.Contains(center)) return true;
+	// Check cuboid bounds
+	if (cuboid1.Contains(center)) return true;
+	if (cuboid2.Contains(center)) return true;
 
-	// Check circles at rectangle corners
+	// Check spheres at cuboid corners
 	const auto corners = {
 		minBound,
 		maxBound,
@@ -190,14 +194,14 @@ template <typename T>
 
 	for (const auto& corner : corners)
 	{
-		if (circle.Contains(corner)) return true;
+		if (sphere.Contains(corner)) return true;
 	}
 
 	return false;
 }
 
 template <typename T>
-[[nodiscard]] constexpr bool Intersect(const Circle<T> circle, const Rectangleee<T> rectangle) noexcept
+[[nodiscard]] constexpr bool Intersect(const Sphere<T> sphere, const Cuboid<T> cuboid) noexcept
 {
-	return Intersect(rectangle, circle);
+	return Intersect(cuboid, sphere);
 }

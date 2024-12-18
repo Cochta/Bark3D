@@ -25,66 +25,64 @@ void TriggerSample::OnTriggerExit(ColliderRef col1, ColliderRef col2) noexcept
 void TriggerSample::SampleSetUp() noexcept
 {
 	_world.SetContactListener(this);
-	_nbObjects = CIRCLE_NBR + RECTANGLE_NBR + TRIANGLE_NBR;
+	_nbObjects = sphere_NBR + cuboid_NBR + TRIANGLE_NBR;
 	_triggerNbrPerCollider.resize(_nbObjects, 0);
 	AllGraphicsData.reserve(_nbObjects);
 	_bodyRefs.reserve(_nbObjects);
 	_colRefs.reserve(_nbObjects);
 
-	//Create Circles
-	for (std::size_t i = 0; i < CIRCLE_NBR; ++i)
+	//Create spheres
+	for (std::size_t i = 0; i < sphere_NBR; ++i)
 	{
-		const auto circleBodyRef = _world.CreateBody();
-		_bodyRefs.push_back(circleBodyRef);
-		auto& circleBody = _world.GetBody(circleBodyRef);
+		const auto sphereBodyRef = _world.CreateBody();
+		_bodyRefs.push_back(sphereBodyRef);
+		auto& sphereBody = _world.GetBody(sphereBodyRef);
 
-		circleBody.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0, 0), SPEED);
+		sphereBody.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0), SPEED);
 
-		circleBody.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-						  Random::Range(100.f, Metrics::Height - 100.f) };
+		sphereBody.Position = { Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f), Random::Range(-100.f, 100.f) };
 
-		const auto circleColRef = _world.CreateCollider(circleBodyRef);
-		_colRefs.push_back(circleColRef);
-		auto& circleCol = _world.GetCollider(circleColRef);
-		circleCol.Shape = Circle(XMVectorZero(), CIRCLE_RADIUS);
-		circleCol.BodyPosition = circleBody.Position;
-		circleCol.IsTrigger = true;
+		const auto sphereColRef = _world.CreateCollider(sphereBodyRef);
+		_colRefs.push_back(sphereColRef);
+		auto& sphereCol = _world.GetCollider(sphereColRef);
+		sphereCol.Shape = Sphere(XMVectorZero(), sphere_RADIUS);
+		sphereCol.BodyPosition = sphereBody.Position;
+		sphereCol.IsTrigger = true;
 
 		GraphicsData cgd;
-		cgd.Shape = Circle(XMVectorZero(), CIRCLE_RADIUS) + circleBody.Position;
+		cgd.Shape = Sphere(XMVectorZero(), sphere_RADIUS) + sphereBody.Position;
 		AllGraphicsData.push_back(cgd);
 	}
 
-	//Create Rectangles
-	for (std::size_t i = 0; i < RECTANGLE_NBR; ++i)
+	//Create cuboids
+	for (std::size_t i = 0; i < cuboid_NBR; ++i)
 	{
 		const auto rectBodyRef = _world.CreateBody();
 		_bodyRefs.push_back(rectBodyRef);
 		auto& rectBody = _world.GetBody(rectBodyRef);
 
-		rectBody.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0, 0), SPEED);
+		rectBody.Velocity = XMVectorScale(XMVectorSet(Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), Random::Range(-1.f, 1.f), 0), SPEED);
 
-		rectBody.Position = { Random::Range(100.f, Metrics::Width - 100.f),
-						  Random::Range(100.f, Metrics::Height - 100.f) };
+		rectBody.Position = { Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f),Random::Range(-100.f, 100.f) };
 
 		const auto rectColRef = _world.CreateCollider(rectBodyRef);
 		_colRefs.push_back(rectColRef);
 		auto& rectCol = _world.GetCollider(rectColRef);
-		rectCol.Shape = RectangleF(XMVectorZero(), RECTANGLE_BOUNDS);
+		rectCol.Shape = CuboidF(XMVectorZero(), cuboid_BOUNDS);
 		rectCol.BodyPosition = rectBody.Position;
 		rectCol.IsTrigger = true;
 
 		GraphicsData rbd;
-		rbd.Shape = RectangleF(XMVectorZero(), RECTANGLE_BOUNDS) + rectBody.Position;
+		rbd.Shape = CuboidF(XMVectorZero(), cuboid_BOUNDS) + rectBody.Position;
 		AllGraphicsData.push_back(rbd);
 	}
 }
 
-void TriggerSample::DrawQuadtree(const QuadNode& node) noexcept
+void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 {
 	if (node.Children[0] == nullptr)
 	{
-		_quadTreeGraphicsData.push_back({ RectangleF(node.Bounds), false });
+		_quadTreeGraphicsData.push_back({ CuboidF(node.Bounds), false });
 	}
 	else
 	{
@@ -108,32 +106,40 @@ void TriggerSample::SampleUpdate() noexcept
 		auto bounds = col.GetBounds();
 		auto& body = _world.GetBody(col.BodyRef);
 
-		if (XMVectorGetX(bounds.MinBound()) <= 0)
+		if (XMVectorGetX(bounds.MinBound()) <= -100)
 		{
 			body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
 		}
-		else if (XMVectorGetX(bounds.MaxBound()) >= Metrics::Width)
+		else if (XMVectorGetX(bounds.MaxBound()) >= 100)
 		{
 			body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
 		}
-		if (XMVectorGetY(bounds.MinBound()) <= 0)
+		if (XMVectorGetY(bounds.MinBound()) <= -100)
 		{
 			body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
 		}
-		else if (XMVectorGetY(bounds.MaxBound()) >= Metrics::Height)
+		else if (XMVectorGetY(bounds.MaxBound()) >= 100)
 		{
 			body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
+		}
+		if (XMVectorGetZ(bounds.MinBound()) <= -100)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
+		}
+		else if (XMVectorGetZ(bounds.MaxBound()) >= 100)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
 		}
 
 		auto& shape = _world.GetCollider(_colRefs[i]).Shape;
 
 		switch (shape.index())
 		{
-		case static_cast<int>(ShapeType::Circle):
-			AllGraphicsData[i].Shape = std::get<CircleF>(shape) + body.Position;
+		case static_cast<int>(ShapeType::Sphere):
+			AllGraphicsData[i].Shape = std::get<SphereF>(shape) + body.Position;
 			break;
-		case static_cast<int>(ShapeType::Rectangleee):
-			AllGraphicsData[i].Shape = std::get<RectangleF>(shape) + body.Position;
+		case static_cast<int>(ShapeType::Cuboid):
+			AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + body.Position;
 			break;
 		}
 
@@ -148,7 +154,7 @@ void TriggerSample::SampleUpdate() noexcept
 	}
 
 	_quadTreeGraphicsData.clear();
-	DrawQuadtree(_world.QuadTree.Nodes[0]);
+	DrawQuadtree(_world.BVH.Nodes[0]);
 	AllGraphicsData.insert(AllGraphicsData.end(), _quadTreeGraphicsData.begin(), _quadTreeGraphicsData.end());
 }
 

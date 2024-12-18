@@ -4,6 +4,7 @@ project(Bark3D)
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(imgui-sfml CONFIG REQUIRED)
+#find_package(imgui CONFIG REQUIRED)
 find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -55,8 +56,10 @@ add_library(Renderer ${RENDERER_FILES})
 set_target_properties(Renderer PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(Renderer PUBLIC Renderer/include/)
 target_include_directories(Renderer PUBLIC Common/include/)
+target_include_directories(Renderer PUBLIC External/imgui/include/)
 
 target_link_libraries(Renderer PUBLIC Samples GLUT::GLUT GLEW::GLEW OpenGL::GL)
+
 
 # SFML rendering temporary
 file(GLOB_RECURSE GRAPHICS_FILES SFML/include/*.h SFML/src/*.cpp)

@@ -6,7 +6,7 @@
 class StarSystemSample : public Sample
 {
 private:
-    std::vector<CircleF> _circles;
+    std::vector<SphereF> _spheres;
 
     BodyRef _sunRef;
 

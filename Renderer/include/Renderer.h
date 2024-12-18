@@ -2,14 +2,17 @@
 #include "Camera.h"
 #include "SampleManager.h"
 
-//#include <imgui-SFML.h>
-//#include <imgui.h>
+#include "imgui.h"
+#include "imgui_impl_glut.h"
+#include "imgui_impl_opengl2.h"
 
 class Renderer
 {
 public:
 	Camera camera;
 	SampleManager _sampleManager;
+
+	XMVECTOR MousePos;
 
 	void Resize(int w, int h);
 
@@ -20,18 +23,21 @@ public:
 	void Run() noexcept;
 
 	void drawSnowMan();
-	void drawSphere();
 
 	void renderScene(void);
 
 private:
 
-	void DrawCircle(XMVECTOR center, float radius, int segments, const Color& col) noexcept;
+	void DrawSphere(XMVECTOR center, float radius, int segments, const Color& col) noexcept;
 
-	void DrawRectangle(XMVECTOR minBound, XMVECTOR maxBound, const Color& col) noexcept;
+	void Drawcuboid(XMVECTOR minBound, XMVECTOR maxBound, const Color& col) noexcept;
 
-	void DrawRectangleBorder(XMVECTOR minBound, XMVECTOR maxBound, const Color& col) noexcept;
+	void DrawcuboidBorder(XMVECTOR minBound, XMVECTOR maxBound, const Color& col) noexcept;
 
 	void DrawAllGraphicsData() noexcept;
+
+	//Time
+	int prevTime, currentTime;
+	float deltaTime;
 
 };

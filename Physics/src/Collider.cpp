@@ -1,17 +1,17 @@
 #include "Collider.h"
 
-RectangleF Collider::GetBounds() const noexcept
+CuboidF Collider::GetBounds() const noexcept
 {
 	switch (Shape.index())
 	{
-	case static_cast<int>(ShapeType::Circle):
+	case static_cast<int>(ShapeType::Sphere):
 	{
-		auto circle = std::get<CircleF>(Shape);
-		return RectangleF::FromCenter(circle.Center(), { circle.Radius(), circle.Radius() }) + BodyPosition;
+		auto sphere = std::get<SphereF>(Shape);
+		return CuboidF::FromCenter(sphere.Center(), { sphere.Radius(), sphere.Radius() }) + BodyPosition;
 	}
-	case static_cast<int>(ShapeType::Rectangleee):
+	case static_cast<int>(ShapeType::Cuboid):
 	{
-		return std::get<RectangleF>(Shape) + BodyPosition;
+		return std::get<CuboidF>(Shape) + BodyPosition;
 	}
 	}
 	return { XMVectorZero(), XMVectorZero() };

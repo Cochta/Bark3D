@@ -34,7 +34,7 @@ void World::Update(const float deltaTime) noexcept
 
 	SetUpQuadTree();
 
-	UpdateQuadTreeCollisions(QuadTree.Nodes[0]);
+	UpdateQuadTreeCollisions(BVH.Nodes[0]);
 }
 
 [[nodiscard]] BodyRef World::CreateBody() noexcept
@@ -156,8 +156,8 @@ void World::SetUpQuadTree() noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
-	XMVECTOR maxBounds = XMVectorSet(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), 0, 0);
-	XMVECTOR minBounds = XMVectorSet(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), 0, 0);
+	XMVECTOR maxBounds = XMVectorSet(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), 0);
+	XMVECTOR minBounds = XMVectorSet(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), 0);
 
 	for (auto& collider : _colliders) {
 		if (!collider.IsAttached) {
@@ -170,22 +170,24 @@ void World::SetUpQuadTree() noexcept {
 
 		minBounds = XMVectorSetX(minBounds, std::min(XMVectorGetX(minBounds), XMVectorGetX(bounds.MinBound())));
 		minBounds = XMVectorSetY(minBounds, std::min(XMVectorGetY(minBounds), XMVectorGetY(bounds.MinBound())));
+		minBounds = XMVectorSetZ(minBounds, std::min(XMVectorGetZ(minBounds), XMVectorGetZ(bounds.MinBound())));
 		maxBounds = XMVectorSetX(maxBounds, std::max(XMVectorGetX(maxBounds), XMVectorGetX(bounds.MaxBound())));
 		maxBounds = XMVectorSetY(maxBounds, std::max(XMVectorGetY(maxBounds), XMVectorGetY(bounds.MaxBound())));
+		maxBounds = XMVectorSetZ(maxBounds, std::max(XMVectorGetZ(maxBounds), XMVectorGetZ(bounds.MaxBound())));
 	}
 
-	QuadTree.SetUpRoot(RectangleF(minBounds, maxBounds));
+	BVH.SetUpRoot(CuboidF(minBounds, maxBounds));
 #ifdef TRACY_ENABLE
 	ZoneNamedN(Insert, "Insert in QuadTree", true);
 #endif
 	for (std::size_t i = 0; i < _colliders.size(); ++i) {
 		if (_colliders[i].IsAttached) {
-			QuadTree.Insert(QuadTree.Nodes[0], { _colliders[i].GetBounds(), { i, ColliderGenIndices[i] } });
+			BVH.Insert(BVH.Nodes[0], { _colliders[i].GetBounds(), { i, ColliderGenIndices[i] } });
 		}
 	}
 }
 
-void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
+void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -268,34 +270,34 @@ void World::UpdateQuadTreeCollisions(const QuadNode& node) noexcept
 
 #ifdef TRACY_ENABLE
 	ZoneScoped;
-	/*static constexpr const char* names[] = { "Circle", "Rectangleee", "Polygon", "None" };
+	/*static constexpr const char* names[] = { "Sphere", "Cuboid", "Polygon", "None" };
 	const auto log = fmt::format("Shape A: {}, Shape B: {}", names[static_cast<int>(ShapeA)], names[static_cast<int>(ShapeB)]);
 	ZoneText(log.data(), log.size());*/
 #endif
 
 	switch (ShapeA)
 	{
-	case ShapeType::Circle:
+	case ShapeType::Sphere:
 	{
-		CircleF circle = std::get<CircleF>(colA.Shape) + GetBody(colA.BodyRef).Position;
+		SphereF sphere = std::get<SphereF>(colA.Shape) + GetBody(colA.BodyRef).Position;
 		switch (ShapeB)
 		{
-		case ShapeType::Circle:
-			return Intersect(circle, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Rectangleee:
-			return Intersect(circle, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		case ShapeType::Sphere:
+			return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		case ShapeType::Cuboid:
+			return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
-	case ShapeType::Rectangleee:
+	case ShapeType::Cuboid:
 	{
-		RectangleF rect = std::get<RectangleF>(colA.Shape) + GetBody(colA.BodyRef).Position;
+		CuboidF rect = std::get<CuboidF>(colA.Shape) + GetBody(colA.BodyRef).Position;
 		switch (ShapeB)
 		{
-		case ShapeType::Circle:
-			return Intersect(rect, std::get<CircleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
-		case ShapeType::Rectangleee:
-			return Intersect(rect, std::get<RectangleF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		case ShapeType::Sphere:
+			return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		case ShapeType::Cuboid:
+			return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}

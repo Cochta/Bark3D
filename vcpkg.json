@@ -4,6 +4,7 @@
     "dependencies": [
       "sfml",
       "imgui-sfml",
+      "imgui",
       "freeglut",
       "glew",
       "opengl"
