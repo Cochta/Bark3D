@@ -92,7 +92,7 @@ void BouncingCollisionSample::DrawQuadtree(const BVHNode& node) noexcept
 	}
 	else
 	{
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			DrawQuadtree(*node.Children[i]);
 		}

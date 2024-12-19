@@ -256,6 +256,7 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 	}
 	else
 	{
+		int i = 0;
 		for (const auto& child : node.Children)
 		{
 			UpdateQuadTreeCollisions(*child);

@@ -2,40 +2,49 @@
 
 void Sample::SetUp() noexcept
 {
-    _timer.SetUp();
-    _world.SetUp();
-    SampleSetUp();
+	_timer.SetUp();
+	_world.SetUp();
+	SampleSetUp();
 }
 
 void Sample::Update() noexcept
 {
-    SampleUpdate();
-    _timer.Tick();
-    _world.Update(_timer.DeltaTime);
-    _mouseLeftReleased = false;
-    _mouseRightReleased = false;
+	SampleUpdate();
+	_timer.Tick();
+	if (_isActive)
+	{
+		_world.Update(_timer.DeltaTime);
+	}
+
+	_mouseLeftReleased = false;
+	_mouseRightReleased = false;
 }
 
 void Sample::TearDown() noexcept
 {
-    SampleTearDown();
-    _bodyRefs.clear();
-    AllGraphicsData.clear();
-    _colRefs.clear();
-    _world.TearDown();
+	SampleTearDown();
+	_bodyRefs.clear();
+	AllGraphicsData.clear();
+	_colRefs.clear();
+	_world.TearDown();
 }
 
 void Sample::GetMousePos(const XMVECTOR mousePos) noexcept
 {
-    _mousePos = mousePos;
+	_mousePos = mousePos;
 }
 
 void Sample::OnLeftClick() noexcept
 {
-    _mouseLeftReleased = true;
+	_mouseLeftReleased = true;
 }
 
 void Sample::OnRightClick() noexcept
 {
-    _mouseRightReleased = true;
+	_mouseRightReleased = true;
+}
+
+void Sample::OnStop() noexcept
+{
+	_isActive = !_isActive;
 }

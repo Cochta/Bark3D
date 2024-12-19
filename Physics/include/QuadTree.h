@@ -22,8 +22,8 @@ class BVHNode
 {
 public:
 	CustomlyAllocatedVector<ColliderRefAabb> ColliderRefAabbs;  /**< Vector of collider references with AABBs. */
-	CuboidF Bounds{ XMVectorZero(), XMVectorZero() }; /**< The bounds of the quadtree node. */
-	std::array<BVHNode*, 4> Children{ nullptr, nullptr, nullptr, nullptr }; /**< Array of child nodes. */
+	CuboidF Bounds{ XMVectorZero(), XMVectorZero()}; /**< The bounds of the quadtree node. */
+	std::array<BVHNode*, 8> Children{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }; /**< Array of child nodes. */
 	int Depth = 0; /**< The depth of the node in the quadtree.*/
 
 	/**
@@ -48,7 +48,7 @@ public:
 	CustomlyAllocatedVector<BVHNode> Nodes; /**< Vector of quadtree nodes. */
 
 private:
-	static constexpr int MAX_COL_NBR = 1000; /**< Maximum number of colliders in a quadtree node. */
+	static constexpr int MAX_COL_NBR = 16; /**< Maximum number of colliders in a quadtree node. */
 	static constexpr int MAX_DEPTH = 0; /**< Maximum depth of the quadtree. */
 	int _nodeIndex = 1; /**< The index of the current node in the quadtree. */
 	Allocator& _alloc; /**< The allocator for memory allocation.*/

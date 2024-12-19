@@ -68,3 +68,8 @@ void SampleManager::GiveRightMouseClickToSample() const noexcept
 {
     _samples[_sampleIdx]->OnRightClick();
 }
+
+void SampleManager::StopSample() const noexcept
+{
+    _samples[_sampleIdx]->OnStop();
+}

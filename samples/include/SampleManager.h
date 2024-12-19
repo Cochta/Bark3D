@@ -39,4 +39,5 @@ public:
 	void GiveLeftMouseClickToSample() const noexcept;
 
 	void GiveRightMouseClickToSample() const noexcept;
+	void StopSample() const noexcept;
 };

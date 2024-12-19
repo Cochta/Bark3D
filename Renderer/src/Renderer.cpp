@@ -62,6 +62,8 @@ void Renderer::renderScene(void)
 		camera.computePos(camera.deltaMove);
 	if (camera.deltaAngle)
 		camera.computeDir(camera.deltaAngle);
+	if (camera.deltaVertical)
+		camera.computeVertical(camera.deltaVertical);
 
 	glViewport(0, 0, Metrics::Width, Metrics::Height);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -282,21 +284,43 @@ void Renderer::Drawcuboid(const XMVECTOR minBound,
 
 void Renderer::DrawcuboidBorder(const XMVECTOR minBound, const XMVECTOR maxBound,
 	const Color& col) noexcept {
-	// Calculate the width and height of the cuboid
-	//float width = XMVectorGetX(maxBound) - XMVectorGetX(minBound);
-	//float height = XMVectorGetY(maxBound) - XMVectorGetY(minBound);
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 
-	//// Create an SFML cuboid shape
-	//sf::cuboidShape cuboid(sf::Vector2f(width, height));
+	// Extract dimensions and coordinates
+	float minX = XMVectorGetX(minBound);
+	float minY = XMVectorGetY(minBound);
+	float minZ = XMVectorGetZ(minBound);
+	float maxX = XMVectorGetX(maxBound);
+	float maxY = XMVectorGetY(maxBound);
+	float maxZ = XMVectorGetZ(maxBound);
 
-	//// Set the position and color of the cuboid
-	//cuboid.setPosition(XMVectorGetX(minBound), XMVectorGetY(minBound));
-	//cuboid.setOutlineColor(col);
-	//cuboid.setOutlineThickness(1);
-	//cuboid.setFillColor(sf::Color::Transparent);
+	// Set the border color
+	glColor3f(col.r / 255.0f, col.g / 255.0f, col.b / 255.0f);
 
-	//// Draw the cuboid to the window
-	//_window.draw(cuboid);
+	// Draw lines to form the cuboid border
+	glBegin(GL_LINES);
+
+	// Bottom face
+	glVertex3f(minX, minY, minZ); glVertex3f(maxX, minY, minZ);
+	glVertex3f(maxX, minY, minZ); glVertex3f(maxX, minY, maxZ);
+	glVertex3f(maxX, minY, maxZ); glVertex3f(minX, minY, maxZ);
+	glVertex3f(minX, minY, maxZ); glVertex3f(minX, minY, minZ);
+
+	// Top face
+	glVertex3f(minX, maxY, minZ); glVertex3f(maxX, maxY, minZ);
+	glVertex3f(maxX, maxY, minZ); glVertex3f(maxX, maxY, maxZ);
+	glVertex3f(maxX, maxY, maxZ); glVertex3f(minX, maxY, maxZ);
+	glVertex3f(minX, maxY, maxZ); glVertex3f(minX, maxY, minZ);
+
+	// Vertical edges
+	glVertex3f(minX, minY, minZ); glVertex3f(minX, maxY, minZ);
+	glVertex3f(maxX, minY, minZ); glVertex3f(maxX, maxY, minZ);
+	glVertex3f(maxX, minY, maxZ); glVertex3f(maxX, maxY, maxZ);
+	glVertex3f(minX, minY, maxZ); glVertex3f(minX, maxY, maxZ);
+
+	glEnd();
 }
 
 void Renderer::DrawAllGraphicsData() noexcept {

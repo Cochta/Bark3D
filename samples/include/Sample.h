@@ -34,6 +34,7 @@ class Sample {
 
  private:
   Timer _timer;
+  bool _isActive = true;
 
  public:
   virtual std::string GetName() noexcept = 0;
@@ -50,6 +51,8 @@ class Sample {
   void OnLeftClick() noexcept;
 
   void OnRightClick() noexcept;
+
+  void OnStop() noexcept;
 
   virtual ~Sample() noexcept = default;
 

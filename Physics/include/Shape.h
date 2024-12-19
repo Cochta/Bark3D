@@ -161,43 +161,15 @@ template<typename T>
 }
 
 template <typename T>
-[[nodiscard]] constexpr bool Intersect(const Cuboid<T> cuboid, const Sphere<T> sphere) noexcept
-{
-	const auto center = sphere.Center();
+[[nodiscard]] constexpr bool Intersect(const Cuboid<T>& cuboid, const Sphere<T>& sphere) noexcept {
+    XMVECTOR closestPoint = XMVectorClamp(
+        sphere.Center(),
+        cuboid.MinBound(),
+        cuboid.MaxBound()
+    );
 
-	if (cuboid.Contains(center)) return true;
-
-	const auto minBound = cuboid.MinBound();
-	const auto maxBound = cuboid.MaxBound();
-	const auto radius = sphere.Radius();
-
-	const auto minBoundRect1 = XMVectorSubtract(minBound, XMVectorSet(radius, 0, 0, 0));
-	const auto minBoundRect2 = XMVectorSubtract(minBound, XMVectorSet(0, radius, 0, 0));
-	const auto maxBoundRect1 = XMVectorAdd(maxBound, XMVectorSet(radius, 0, 0, 0));
-	const auto maxBoundRect2 = XMVectorAdd(maxBound, XMVectorSet(0, radius, 0, 0));
-
-	// Added sphere radius to cuboid bounds
-	const Cuboid<T> cuboid1(minBoundRect1, maxBoundRect1);
-	const Cuboid<T> cuboid2(minBoundRect2, maxBoundRect2);
-
-	// Check cuboid bounds
-	if (cuboid1.Contains(center)) return true;
-	if (cuboid2.Contains(center)) return true;
-
-	// Check spheres at cuboid corners
-	const auto corners = {
-		minBound,
-		maxBound,
-		XMVectorSet(XMVectorGetX(minBound), XMVectorGetY(maxBound),0,0),
-		XMVectorSet(XMVectorGetX(maxBound), XMVectorGetY(minBound),0,0)
-	};
-
-	for (const auto& corner : corners)
-	{
-		if (sphere.Contains(corner)) return true;
-	}
-
-	return false;
+    float distanceSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(closestPoint, sphere.Center())));
+    return distanceSq <= (sphere.Radius() * sphere.Radius());
 }
 
 template <typename T>
