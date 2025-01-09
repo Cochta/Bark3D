@@ -36,9 +36,9 @@ void TriggerSample::OnTriggerExit(ColliderRef col1, ColliderRef col2) noexcept
 	{
 		printf("sortie: nb = %i\n", _triggerNbrPerCollider[col2.Index]);
 	}
-	//fix de clochard
-	_triggerNbrPerCollider[col1.Index] = 0;
-	_triggerNbrPerCollider[col2.Index] = 0;
+	////fix de clochard
+	//_triggerNbrPerCollider[col1.Index] = 0;
+	//_triggerNbrPerCollider[col2.Index] = 0;
 }
 
 void TriggerSample::SampleSetUp() noexcept

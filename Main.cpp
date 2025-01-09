@@ -10,10 +10,10 @@ static void renderScene(void) { renderer.renderScene(); }
 void pressKeyboard(unsigned char key, int xx, int yy) {
 	ImGui_ImplGLUT_KeyboardFunc(key, xx, yy);
 	switch (key) {
-	case 'a': renderer.camera.deltaAngle = -0.05f; break;
-	case 'd': renderer.camera.deltaAngle = 0.05f; break;
-	case 'w': renderer.camera.deltaMove = 5.5f; break;
-	case 's': renderer.camera.deltaMove = -5.5f; break;
+	case 'a': renderer.camera.deltaAngle = -0.04f; break;
+	case 'd': renderer.camera.deltaAngle = 0.04f; break;
+	case 'w': renderer.camera.deltaMove = 10.f; break;
+	case 's': renderer.camera.deltaMove = -10.f; break;
 	case 32: renderer.camera.deltaVertical = 5.5f; break;
 	}
 }
