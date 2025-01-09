@@ -256,7 +256,6 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 	}
 	else
 	{
-		int i = 0;
 		for (const auto& child : node.Children)
 		{
 			UpdateQuadTreeCollisions(*child);
@@ -271,9 +270,6 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 
 #ifdef TRACY_ENABLE
 	ZoneScoped;
-	/*static constexpr const char* names[] = { "Sphere", "Cuboid", "Polygon", "None" };
-	const auto log = fmt::format("Shape A: {}, Shape B: {}", names[static_cast<int>(ShapeA)], names[static_cast<int>(ShapeB)]);
-	ZoneText(log.data(), log.size());*/
 #endif
 
 	switch (ShapeA)

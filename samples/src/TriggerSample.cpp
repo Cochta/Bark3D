@@ -14,12 +14,31 @@ void TriggerSample::OnTriggerEnter(ColliderRef col1, ColliderRef col2) noexcept
 {
 	_triggerNbrPerCollider[col1.Index]++;
 	_triggerNbrPerCollider[col2.Index]++;
+	if (col1.Index == 20)
+	{
+		printf("collision: nb = %i\n", _triggerNbrPerCollider[col1.Index]);
+	}
+	if (col2.Index == 20)
+	{
+		printf("collision: nb = %i\n", _triggerNbrPerCollider[col2.Index]);
+	}
 }
 
 void TriggerSample::OnTriggerExit(ColliderRef col1, ColliderRef col2) noexcept
 {
 	_triggerNbrPerCollider[col1.Index]--;
 	_triggerNbrPerCollider[col2.Index]--;
+	if (col1.Index == 20)
+	{
+		printf("sortie: nb = %i\n", _triggerNbrPerCollider[col1.Index]);
+	}
+	if (col2.Index == 20)
+	{
+		printf("sortie: nb = %i\n", _triggerNbrPerCollider[col2.Index]);
+	}
+	//fix de clochard
+	_triggerNbrPerCollider[col1.Index] = 0;
+	_triggerNbrPerCollider[col2.Index] = 0;
 }
 
 void TriggerSample::SampleSetUp() noexcept
@@ -80,17 +99,36 @@ void TriggerSample::SampleSetUp() noexcept
 
 void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 {
+	static Color color = { 0,0,0,0 };
 	if (node.Children[0] == nullptr)
 	{
-		_quadTreeGraphicsData.push_back({ CuboidF(node.Bounds), false });
+
+		_quadTreeGraphicsData.push_back({ CuboidF(node.Bounds), false ,color });
+
 	}
 	else
 	{
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < node.Children.size(); i++)
 		{
+			switch (i)
+			{
+			case 0: color.r = 255; break;
+			case 1: color.g = 255; break;
+			case 2: color.b = 255; break;
+			case 3: color.r = 255; color.g = 255; color.b = 255; break;
+			case 4: color.r = 255; color.g = 255; break;
+			case 5: color.r = 255; color.b = 255; break;
+			case 6: color.g = 255; color.b = 255; break;
+			case 7: color.r = 50; color.g = 50; color.b = 50; break;
+			default:
+				color = { 0,0,0,0 };
+				break;
+
+			}
 			DrawQuadtree(*node.Children[i]);
 		}
 	}
+	color = { 0,0,0,0 };
 }
 
 void TriggerSample::SampleUpdate() noexcept
@@ -145,11 +183,22 @@ void TriggerSample::SampleUpdate() noexcept
 
 		if (_triggerNbrPerCollider[i] > 0)
 		{
-			AllGraphicsData[i].Color = { 0, 255, 0, 255 };
+			if (i == 20)
+			{
+				AllGraphicsData[i].Color = { 255, 255, 0, 255 };
+			}
+			else
+				AllGraphicsData[i].Color = { 0, 255, 0, 255 };
 		}
 		else
 		{
-			AllGraphicsData[i].Color = { 0, 0, 255, 255 };
+			if (i == 20)
+			{
+				AllGraphicsData[i].Color = { 255, 0, 0, 255 };
+			}
+			else {
+				AllGraphicsData[i].Color = { 0, 0, 255, 255 };
+			}
 		}
 	}
 

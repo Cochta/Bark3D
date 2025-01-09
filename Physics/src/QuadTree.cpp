@@ -112,6 +112,7 @@ void BVH::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
 	{
 		node.ColliderRefAabbs.push_back(colliderRefAabb);
 	}
+	//printf("%i\n", node.ColliderRefAabbs.size());
 }
 
 void BVH::SetUpRoot(const CuboidF& bounds) noexcept
