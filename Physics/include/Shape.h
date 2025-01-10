@@ -21,11 +21,6 @@ public:
 	 * @param radius Radius of the sphere, if negative, it will be converted to its positive value
 	 */
 	constexpr Sphere(XMVECTOR center, T radius) noexcept : _center(center), _radius(Abs(radius)) {}
-	/**
-	 * @brief Construct a new Sphere object with a center in (0, 0)
-	 * @param radius Radius of the sphere, if negative, it will be converted to its positive value
-	 */
-	constexpr explicit Sphere(T radius) noexcept : _center(XMVECTOR::Zero()), _radius(Abs(radius)) {}
 
 private:
 	XMVECTOR _center = XMVectorZero();
@@ -80,8 +75,8 @@ public:
 	constexpr Cuboid(XMVECTOR minBound, XMVECTOR maxBound) noexcept : _minBound(minBound), _maxBound(maxBound) {}
 
 private:
-	XMVECTOR _minBound = XMVECTOR::Zero();
-	XMVECTOR _maxBound = XMVECTOR::Zero();
+	XMVECTOR _minBound = cheval;
+	XMVECTOR _maxBound = XMVectorZero();
 
 public:
 	[[nodiscard]] constexpr XMVECTOR MinBound() const noexcept { return _minBound; }
@@ -162,14 +157,14 @@ template<typename T>
 
 template <typename T>
 [[nodiscard]] constexpr bool Intersect(const Cuboid<T>& cuboid, const Sphere<T>& sphere) noexcept {
-    XMVECTOR closestPoint = XMVectorClamp(
-        sphere.Center(),
-        cuboid.MinBound(),
-        cuboid.MaxBound()
-    );
+	XMVECTOR closestPoint = XMVectorClamp(
+		sphere.Center(),
+		cuboid.MinBound(),
+		cuboid.MaxBound()
+	);
 
-    float distanceSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(closestPoint, sphere.Center())));
-    return distanceSq <= (sphere.Radius() * sphere.Radius());
+	float distanceSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(closestPoint, sphere.Center())));
+	return distanceSq <= (sphere.Radius() * sphere.Radius());
 }
 
 template <typename T>

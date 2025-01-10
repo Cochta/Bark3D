@@ -7,7 +7,7 @@ CuboidF Collider::GetBounds() const noexcept
 	case static_cast<int>(ShapeType::Sphere):
 	{
 		auto sphere = std::get<SphereF>(Shape);
-		return CuboidF::FromCenter(sphere.Center(), { sphere.Radius(), sphere.Radius() }) + BodyPosition;
+		return CuboidF::FromCenter(sphere.Center(), { sphere.Radius(), sphere.Radius(), sphere.Radius()}) + BodyPosition;
 	}
 	case static_cast<int>(ShapeType::Cuboid):
 	{

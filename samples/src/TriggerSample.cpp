@@ -14,11 +14,11 @@ void TriggerSample::OnTriggerEnter(ColliderRef col1, ColliderRef col2) noexcept
 {
 	_triggerNbrPerCollider[col1.Index]++;
 	_triggerNbrPerCollider[col2.Index]++;
-	if (col1.Index == 20)
+	if (col1.Index == 0)
 	{
 		printf("collision: nb = %i\n", _triggerNbrPerCollider[col1.Index]);
 	}
-	if (col2.Index == 20)
+	if (col2.Index == 0)
 	{
 		printf("collision: nb = %i\n", _triggerNbrPerCollider[col2.Index]);
 	}
@@ -28,11 +28,11 @@ void TriggerSample::OnTriggerExit(ColliderRef col1, ColliderRef col2) noexcept
 {
 	_triggerNbrPerCollider[col1.Index]--;
 	_triggerNbrPerCollider[col2.Index]--;
-	if (col1.Index == 20)
+	if (col1.Index == 0)
 	{
 		printf("sortie: nb = %i\n", _triggerNbrPerCollider[col1.Index]);
 	}
-	if (col2.Index == 20)
+	if (col2.Index == 0)
 	{
 		printf("sortie: nb = %i\n", _triggerNbrPerCollider[col2.Index]);
 	}
@@ -183,7 +183,7 @@ void TriggerSample::SampleUpdate() noexcept
 
 		if (_triggerNbrPerCollider[i] > 0)
 		{
-			if (i == 20)
+			if (i == 0)
 			{
 				AllGraphicsData[i].Color = { 255, 255, 0, 255 };
 			}
@@ -192,7 +192,7 @@ void TriggerSample::SampleUpdate() noexcept
 		}
 		else
 		{
-			if (i == 20)
+			if (i == 0)
 			{
 				AllGraphicsData[i].Color = { 255, 0, 0, 255 };
 			}
