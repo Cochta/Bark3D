@@ -1,5 +1,10 @@
 #include "Renderer.h"
 
+#ifdef TRACY_ENABLE
+#include "Tracy.hpp"
+#include "TracyC.h"
+#endif
+
 
 void Renderer::Resize(int w, int h)
 {

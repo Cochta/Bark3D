@@ -2,8 +2,6 @@
     "name": "bark3d",
     "version-string": "1.0",
     "dependencies": [
-      "sfml",
-      "imgui-sfml",
       "imgui",
       "freeglut",
       "glew",

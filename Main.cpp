@@ -1,4 +1,3 @@
-#include "SFMLApp.h"
 #include "Renderer.h"
 #include <iostream>
 

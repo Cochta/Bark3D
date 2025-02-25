@@ -3,9 +3,7 @@ project(Bark3D)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(imgui-sfml CONFIG REQUIRED)
 #find_package(imgui CONFIG REQUIRED)
-find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED) 
@@ -50,6 +48,8 @@ target_include_directories(Samples PUBLIC samples/include)
 target_include_directories(Samples PUBLIC Physics/include/)
 target_include_directories(Samples PUBLIC Common/include/)
 
+target_link_libraries(Samples PUBLIC Physics Common)
+
 # Renderer for future direct x (actually opengl using glut testing)
 file(GLOB_RECURSE RENDERER_FILES Renderer/include/*.h Renderer/src/*.cpp)
 add_library(Renderer ${RENDERER_FILES})
@@ -60,23 +60,12 @@ target_include_directories(Renderer PUBLIC External/imgui/include/)
 
 target_link_libraries(Renderer PUBLIC Samples GLUT::GLUT GLEW::GLEW OpenGL::GL)
 
-
-# SFML rendering temporary
-file(GLOB_RECURSE GRAPHICS_FILES SFML/include/*.h SFML/src/*.cpp)
-add_library(Graphics ${GRAPHICS_FILES})
-set_target_properties(Graphics PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(Graphics PUBLIC SFML/include/)
-target_include_directories(Graphics PUBLIC Physics/include/)
-target_include_directories(Graphics PUBLIC Common/include/)
-target_include_directories(Graphics PUBLIC samples/include/)
-target_link_libraries(Graphics PUBLIC Samples Physics Common sfml-system sfml-network sfml-graphics sfml-window ImGui-SFML::ImGui-SFML)
-
 if (USE_TRACY)
-    target_compile_definitions(Graphics PUBLIC TRACY_ENABLE)
+    target_compile_definitions(Renderer PUBLIC TRACY_ENABLE)
     # Link the TracyClient library
-    target_link_libraries(Graphics PRIVATE tracyClient)
+    target_link_libraries(Renderer PRIVATE tracyClient)
 endif()
 
 # Main
 add_executable(Main Main.cpp)
-target_link_libraries(Main PUBLIC Graphics Renderer)
+target_link_libraries(Main PUBLIC Renderer)
