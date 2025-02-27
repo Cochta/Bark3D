@@ -4,16 +4,13 @@
 #include "Sample.h"
 #include "Random.h"
 
-#ifdef SDL_ENABLE
+
 static constexpr float SPEED = -500;
-#else
-static constexpr float SPEED = 500;
-#endif
 
 class GroundCollisionSample : public Sample, public ContactListener
 {
 private:
-	
+
 
 public:
 	std::string GetName() noexcept override;

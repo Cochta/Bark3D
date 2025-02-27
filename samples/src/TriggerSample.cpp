@@ -99,7 +99,7 @@ void TriggerSample::SampleSetUp() noexcept
 
 void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 {
-	static Color color = { 0,0,0,0 };
+	static Color color = { 255,255,255,255 };
 	if (node.Children[0] == nullptr)
 	{
 
@@ -121,14 +121,14 @@ void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 			case 6: color.g = 255; color.b = 255; break;
 			case 7: color.r = 50; color.g = 50; color.b = 50; break;
 			default:
-				color = { 0,0,0,0 };
+				color = { 255,255,255,255 };
 				break;
 
 			}
 			DrawQuadtree(*node.Children[i]);
 		}
 	}
-	color = { 0,0,0,0 };
+	color = { 255,255,255,255 };
 }
 
 void TriggerSample::SampleUpdate() noexcept
