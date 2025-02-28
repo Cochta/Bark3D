@@ -11,9 +11,9 @@ void pressKeyboard(unsigned char key, int xx, int yy) {
 	switch (key) {
 	case 'a': renderer.camera.deltaAngle = -0.2f; break;
 	case 'd': renderer.camera.deltaAngle = 0.2f; break;
-	case 'w': renderer.camera.deltaMove = 15.f; break;
-	case 's': renderer.camera.deltaMove = -15.f; break;
-	case 32: renderer.camera.deltaVertical = 8.5f; break;
+	case 'w': renderer.camera.deltaMove = 50.f; break;
+	case 's': renderer.camera.deltaMove = -50.f; break;
+	case 32: renderer.camera.deltaVertical = 50.f; break;
 	}
 }
 void releaseKeyboard(unsigned char key, int xx, int yy) {
@@ -31,7 +31,7 @@ void releaseKeyboard(unsigned char key, int xx, int yy) {
 
 void pressKey(int key, int xx, int yy) {
 	switch (key) {
-	case GLUT_KEY_CTRL_L: renderer.camera.deltaVertical = -5.5f; break;
+	case GLUT_KEY_CTRL_L: renderer.camera.deltaVertical = -50.f; break;
 	}
 }
 

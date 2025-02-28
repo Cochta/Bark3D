@@ -28,17 +28,20 @@ void WaterBathSample::SampleSetUp() noexcept {
 	groundBody.Type = BodyType::STATIC;
 	groundBody.Mass = 1;
 
-	groundBody.Position = { 0,Metrics::MetersToPixels(-3),0 };
+	groundBody.Position = { 0,-WALLDIST - WALLSIZE ,0 };
 
 	const auto groundColRef = _world.CreateCollider(groundRef);
 	_colRefs.push_back(groundColRef);
 	auto& groundCol = _world.GetCollider(groundColRef);
-	groundCol.Shape = CuboidF({ Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-0.1f), Metrics::MetersToPixels(-3) },
-							  { Metrics::MetersToPixels(3), Metrics::MetersToPixels(0.1f), Metrics::MetersToPixels(3) });
+	groundCol.Shape = CuboidF({ -WALLDIST, -WALLSIZE, -WALLDIST },
+							  { WALLDIST, WALLSIZE, WALLDIST });
 	groundCol.BodyPosition = groundBody.Position;
-	groundCol.Restitution = 1.f;
+	groundCol.Restitution = 0.f;
 
-	AllGraphicsData.emplace_back();
+	GraphicsData gd;
+	gd.Color = { 160,160,160 };
+
+	AllGraphicsData.emplace_back(gd);
 
 	// Create static cuboids for walls
 	// Wall 1
@@ -48,19 +51,17 @@ void WaterBathSample::SampleSetUp() noexcept {
 	wall1Body.Type = BodyType::STATIC;
 	wall1Body.Mass = 1;
 
-	wall1Body.Position = { Metrics::MetersToPixels(-3),0,0 };
+	wall1Body.Position = { -WALLDIST - WALLSIZE,0,0 };
 
 	const auto wall1ColRef = _world.CreateCollider(wall1Ref);
 	_colRefs.push_back(wall1ColRef);
 	auto& wall1Col = _world.GetCollider(wall1ColRef);
-	wall1Col.Shape = CuboidF({ Metrics::MetersToPixels(-0.1f), Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-3) },
-							 { Metrics::MetersToPixels(0.1f), Metrics::MetersToPixels(3), Metrics::MetersToPixels(3) });
+	wall1Col.Shape = CuboidF({ -WALLSIZE, -WALLDIST, -WALLDIST },
+							 { WALLSIZE, WALLDIST, WALLDIST });
 	wall1Col.BodyPosition = wall1Body.Position;
-	wall1Col.Restitution = 1.f;
+	wall1Col.Restitution = 0.f;
 
-	GraphicsData gd;
 	gd.Filled = false;
-	gd.Color = { 160,160,160 };
 
 	AllGraphicsData.emplace_back(gd);
 
@@ -71,15 +72,15 @@ void WaterBathSample::SampleSetUp() noexcept {
 	wall2Body.Type = BodyType::STATIC;
 	wall2Body.Mass = 1;
 
-	wall2Body.Position = { Metrics::MetersToPixels(3),0,0 };
+	wall2Body.Position = { WALLDIST + WALLSIZE,0,0 };
 
 	const auto wall2ColRef = _world.CreateCollider(wall2Ref);
 	_colRefs.push_back(wall2ColRef);
 	auto& wall2Col = _world.GetCollider(wall2ColRef);
-	wall2Col.Shape = CuboidF({ Metrics::MetersToPixels(-0.1f), Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-3) },
-							 { Metrics::MetersToPixels(0.1f), Metrics::MetersToPixels(3), Metrics::MetersToPixels(3) });
+	wall2Col.Shape = CuboidF({ -WALLSIZE, -WALLDIST, -WALLDIST },
+							 { WALLSIZE, WALLDIST, WALLDIST });
 	wall2Col.BodyPosition = wall2Body.Position;
-	wall2Col.Restitution = 1.f;
+	wall2Col.Restitution = 0.f;
 
 	AllGraphicsData.emplace_back(gd);
 
@@ -90,15 +91,15 @@ void WaterBathSample::SampleSetUp() noexcept {
 	wall3Body.Type = BodyType::STATIC;
 	wall3Body.Mass = 1;
 
-	wall3Body.Position = { 0,0,Metrics::MetersToPixels(-3) };
+	wall3Body.Position = { 0,0,-WALLDIST - WALLSIZE };
 
 	const auto wall3ColRef = _world.CreateCollider(wall3Ref);
 	_colRefs.push_back(wall3ColRef);
 	auto& wall3Col = _world.GetCollider(wall3ColRef);
-	wall3Col.Shape = CuboidF({ Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-0.1) },
-							 { Metrics::MetersToPixels(3), Metrics::MetersToPixels(3), Metrics::MetersToPixels(0.1) });
+	wall3Col.Shape = CuboidF({ -WALLDIST, -WALLDIST, -WALLSIZE },
+							 { WALLDIST, WALLDIST, WALLSIZE });
 	wall3Col.BodyPosition = wall3Body.Position;
-	wall3Col.Restitution = 1.f;
+	wall3Col.Restitution = 0.f;
 
 	AllGraphicsData.emplace_back(gd);
 
@@ -109,35 +110,22 @@ void WaterBathSample::SampleSetUp() noexcept {
 	wall4Body.Type = BodyType::STATIC;
 	wall4Body.Mass = 1;
 
-	wall4Body.Position = { 0,0,Metrics::MetersToPixels(3) };
+	wall4Body.Position = { 0,0,WALLDIST + WALLSIZE };
 
 	const auto wall4ColRef = _world.CreateCollider(wall4Ref);
 	_colRefs.push_back(wall4ColRef);
 	auto& wall4Col = _world.GetCollider(wall4ColRef);
-	wall4Col.Shape = CuboidF({ Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-3), Metrics::MetersToPixels(-0.1) },
-							 { Metrics::MetersToPixels(3), Metrics::MetersToPixels(3), Metrics::MetersToPixels(0.1) });
+	wall4Col.Shape = CuboidF({ -WALLDIST, -WALLDIST, -WALLSIZE },
+							 { WALLDIST,WALLDIST, WALLSIZE });
 	wall4Col.BodyPosition = wall4Body.Position;
-	wall4Col.Restitution = 1.f;
+	wall4Col.Restitution = 0.f;
 
 	AllGraphicsData.emplace_back(gd);
 
-	// Create Spheres randomly inside the "bath"
-	//size_t iter = 10;
-	//float offset = 0.5f;
-	//for (size_t y = 0; y < iter; y++)
-	//{
-	//	for (size_t x = 0; x < iter; x++)
-	//	{
-	//		for (size_t z = 0; z < iter; z++)
-	//		{
-	//			CreateBall({ Metrics::MetersToPixels(-2.8 + 0.05 + x * offset),Metrics::MetersToPixels(-2.8 + y * offset),Metrics::MetersToPixels(-2.8 + z * offset) });
-	//		}
-	//	}
-	//}
 	for (size_t i = 0; i < NBPARTICLES; i++) {
-		CreateBall({ Metrics::MetersToPixels(Random::Range(-2.5f, 2.5f)),
-					 Metrics::MetersToPixels(Random::Range(-2.5f, 2.5f)),
-					 Metrics::MetersToPixels(Random::Range(-2.5f, 2.5f)) });
+		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
 	}
 
 }
@@ -156,10 +144,10 @@ void WaterBathSample::SampleUpdate() noexcept {
 		case static_cast<int>(ShapeType::Sphere):
 		//fix to reduce quadtree size
 
-		//if (XMVectorGetY(col.BodyPosition) <= -400)
-		//{
-		//	_world.GetBody(col.BodyRef).Position = XMVectorZero();
-		//}
+		if (XMVectorGetY(col.BodyPosition) <= -500)
+		{
+			_world.GetBody(col.BodyRef).Position = XMVectorZero();
+		}
 
 		_world.GetBody(col.BodyRef).ApplyForce({ 0, GRAV,0 });
 		AllGraphicsData[i].Shape =

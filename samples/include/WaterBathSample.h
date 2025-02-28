@@ -7,6 +7,8 @@
 
 static constexpr float GRAV = -500;
 static constexpr int NBPARTICLES = 3000;
+static constexpr float WALLSIZE = Metrics::MetersToPixels(0.1f);
+static constexpr float WALLDIST = Metrics::MetersToPixels(1.5f);
 
 class WaterBathSample : public Sample, public ContactListener
 {
