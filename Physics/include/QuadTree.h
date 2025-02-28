@@ -49,7 +49,7 @@ public:
 
 private:
 	static constexpr int MAX_COL_NBR = 16; /**< Maximum number of colliders in a quadtree node. */
-	static constexpr int MAX_DEPTH = 0; /**< Maximum depth of the quadtree. */
+	static constexpr int MAX_DEPTH = 4; /**< Maximum depth of the quadtree. */
 	int _nodeIndex = 1; /**< The index of the current node in the quadtree. */
 	Allocator& _alloc; /**< The allocator for memory allocation.*/
 public:

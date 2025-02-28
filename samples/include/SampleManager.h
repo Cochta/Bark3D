@@ -5,6 +5,7 @@
 #include "TriggerSample.h"
 #include "BouncingCollisionSample.h"
 #include "GroundCollisionSample.h"
+#include "WaterBathSample.h"
 
 class SampleManager
 {

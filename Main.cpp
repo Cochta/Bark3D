@@ -9,11 +9,11 @@ static void renderScene(void) { renderer.renderScene(); }
 void pressKeyboard(unsigned char key, int xx, int yy) {
 	ImGui_ImplGLUT_KeyboardFunc(key, xx, yy);
 	switch (key) {
-	case 'a': renderer.camera.deltaAngle = -0.04f; break;
-	case 'd': renderer.camera.deltaAngle = 0.04f; break;
-	case 'w': renderer.camera.deltaMove = 10.f; break;
-	case 's': renderer.camera.deltaMove = -10.f; break;
-	case 32: renderer.camera.deltaVertical = 5.5f; break;
+	case 'a': renderer.camera.deltaAngle = -0.2f; break;
+	case 'd': renderer.camera.deltaAngle = 0.2f; break;
+	case 'w': renderer.camera.deltaMove = 15.f; break;
+	case 's': renderer.camera.deltaMove = -15.f; break;
+	case 32: renderer.camera.deltaVertical = 8.5f; break;
 	}
 }
 void releaseKeyboard(unsigned char key, int xx, int yy) {
@@ -80,13 +80,6 @@ void mouseMotionCallback(int x, int y) {
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-	//SFMLApp app("Samples SFML", Metrics::Width, Metrics::Height);
-
-	//app.SetUp();
-
-	//app.Run();
-
-	//app.TearDown();
 
 	// init GLUT and create window
 	glutInit(&argc, argv);
