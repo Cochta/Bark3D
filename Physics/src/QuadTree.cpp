@@ -17,36 +17,12 @@ BVH::BVH(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<BV
 	{
 		result += Pow(8, i);
 	}
-	Nodes.resize(result, BVHNode(_alloc));
+	//Nodes.resize(result, BVHNode(_alloc));
+	Nodes.reserve(result);
+	for (size_t i = 0; i < result; ++i) {
+		Nodes.emplace_back(_alloc);
+	}
 }
-
-//void BVH::SubdivideNode(BVHNode& node) noexcept
-//{
-//	const XMVECTOR halfSize = XMVectorDivide(XMVectorSubtract(node.Bounds.MaxBound(), node.Bounds.MinBound()), XMVectorSet(2, 2, 2, 2));
-//	const XMVECTOR minBound = node.Bounds.MinBound();
-//
-//	node.Children[0] = &Nodes[_nodeIndex];
-//	node.Children[0]->Bounds = { minBound, XMVectorAdd(minBound , halfSize) };
-//
-//	node.Children[1] = &Nodes[_nodeIndex + 1];
-//	node.Children[1]->Bounds = { {XMVectorGetX(minBound), XMVectorGetY(minBound) + XMVectorGetY(halfSize)},
-//		{XMVectorGetX(minBound) + XMVectorGetX(halfSize), XMVectorGetY(minBound) + 2 * XMVectorGetY(halfSize)} };
-//
-//	node.Children[2] = &Nodes[_nodeIndex + 2];
-//	node.Children[2]->Bounds = { {XMVectorGetX(minBound) + XMVectorGetX(halfSize), XMVectorGetY(minBound)},
-//		{XMVectorGetX(minBound) + 2 * XMVectorGetX(halfSize), XMVectorGetY(minBound) + XMVectorGetY(halfSize)} };
-//
-//	node.Children[3] = &Nodes[_nodeIndex + 3];
-//	node.Children[3]->Bounds = { {XMVectorGetX(minBound) + XMVectorGetX(halfSize),
-//		XMVectorGetY(minBound) + XMVectorGetY(halfSize)}, node.Bounds.MaxBound() };
-//
-//
-//	for (const auto& child : node.Children)
-//	{
-//		child->Depth = node.Depth + 1;
-//	}
-//	_nodeIndex += 4;
-//}
 
 void BVH::SubdivideNode(BVHNode& node) noexcept
 {
@@ -107,6 +83,7 @@ void BVH::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
 			}
 		}
 		node.ColliderRefAabbs.clear();
+		//node.ColliderRefAabbs.shrink_to_fit();
 	}
 	else
 	{

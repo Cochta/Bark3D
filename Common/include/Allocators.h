@@ -1,331 +1,158 @@
-#pragma once
+/**
+ * @headerfile Allocator.h
+ * This file defines a collection of custom allocator that enables to profile
+ * the data allocations.
+ *
+ * @author Olivier
+ */
 
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <stdexcept>
+#pragma once
 
 #ifdef TRACY_ENABLE
 #include <Tracy.hpp>
-#endif
+#endif // TRACY_ENABLE
 
+#include <cstddef>
+#include <memory>
+#include <vector>
+
+ /**
+  * @brief Allocator is an abstract class the defines the fundamental elements shared between
+  * all different custom allocators.
+  * It also enabled to see and analyse the number of allocations made and the amount
+  * of memory used.
+  */
 class Allocator
 {
-public:
-    virtual ~Allocator() = default;
+protected:
+    void* _rootPtr = nullptr;
+    std::size_t _size = 0;
+    std::size_t _usedMemory = 0;
+    std::size_t _allocationCount = 0;
 
-    virtual void *Allocate(std::size_t count, std::size_t typeSize) = 0;
+public:
+    Allocator() = default;
+    Allocator(void* rootPtr, std::size_t size) noexcept
+    {
+        _rootPtr = rootPtr;
+        _size = size;
+        _usedMemory = 0;
+        _allocationCount = 0;
+    }
+
+    virtual ~Allocator() noexcept
+    {
+        _rootPtr = nullptr;
+        _size = 0;
+        _usedMemory = 0;
+        _allocationCount = 0;
+    };
+
+    /**
+     * @brief Allocate is a method that allocates a given amount of memory.
+     * @param allocationSize The size of the allocation to do.
+     * @param alignment The alignment in memory of the allocation.
+     * @return A pointer pointing to the memory (aka a void*).
+     */
+    virtual void* Allocate(std::size_t allocationSize, std::size_t alignment) = 0;
+
     template<typename T>
-    T* Allocate(std::size_t count)
+    T* Allocate(std::size_t allocationSize)
     {
-        return static_cast<T*>(Allocate(count, sizeof(T)));
+        return static_cast<T*>(Allocate(allocationSize, sizeof(T)));
     }
 
-    virtual void Deallocate(void *ptr) = 0;
+    /**
+     * @brief Deallocate is a method that deallocates a block of memory given in parameter.
+     * @param ptr The pointer to the memory block to deallocates.
+     */
+    virtual void Deallocate(void* ptr) = 0;
+
+    /**
+     * @brief RootPtr is a method that gives to root pointer of the allocator (aka the start of the memory block of
+     * the allocator).
+     * @return The root pointer of the allocator.
+     */
+    [[nodiscard]] void* RootPtr() const noexcept { return _rootPtr; }
+
+    /**
+     * @brief Size is a method that gives to size of the block of memory of the allocator.
+     * @return The size of the block of memory of the allocator.
+     */
+    [[nodiscard]] std::size_t Size() const noexcept { return _size; }
+
+    /**
+     * @brief UseMemory is a method that gives the amount of memory used with the allocator.
+     * @return The amount of memory used with the allocator.
+     */
+    [[nodiscard]] std::size_t UsedMemory() const noexcept { return _usedMemory; }
+
+    /**
+     * @brief AllocationCount is a method that gives the count of allocation made with the allocator.
+     * @return The count of allocation made with the allocator..
+     */
+    [[nodiscard]] std::size_t AllocationCount() const noexcept { return _allocationCount; }
 };
 
-class LinearAllocator : public Allocator
-{
-public:
-    LinearAllocator(std::size_t size) : _size(size), _ptr(new char[size]), _offset(0)
-    {}
-
-    ~LinearAllocator() override
-    {
-        delete[] _ptr;
-    }
-
-    void *Allocate(std::size_t size, std::size_t typeSize) override 
-    {
-        if (_offset + size * typeSize > _size)
-        {
-            throw std::runtime_error("LinearAllocator out of memory");
-        }
-        void *ptr = _ptr + _offset;
-        _offset += size * typeSize;
-        return ptr;
-    }
-
-    void Deallocate(void *ptr) override
-    {}
-
-    void Reset()
-    {
-        _offset = 0;
-    }
-
-private:
-    std::size_t _size;
-    char *_ptr = nullptr;
-    std::size_t _offset;
-};
-
-struct AllocationHeader
-{
-    std::size_t size;
-};
-
-class StackAllocator : public Allocator
-{
-public:
-    StackAllocator(std::size_t size) : _size(size), _ptr(new char[size]), _top(0)
-    {}
-
-    ~StackAllocator() override
-    {
-        delete[] _ptr;
-    }
-
-    void *Allocate(std::size_t size, std::size_t typeSize) override
-    {
-        if (_top + size * typeSize > _size)
-        {
-            throw std::runtime_error("StackAllocator out of memory");
-        }
-
-        std::size_t headerSize = sizeof(AllocationHeader);
-
-        std::size_t totalSize = size * typeSize + headerSize;
-
-        char *allocationPtr = _ptr + _top;
-
-        AllocationHeader *header = reinterpret_cast<AllocationHeader *>(allocationPtr);
-        header->size = totalSize;
-
-        _top += totalSize;
-
-        return allocationPtr + headerSize;
-    }
-
-    void Deallocate(void *ptr) override 
-    {
-        char *allocationPtr = reinterpret_cast<char *>(ptr) - sizeof(AllocationHeader);
-        AllocationHeader *header = reinterpret_cast<AllocationHeader *>(allocationPtr);
-        _top -= header->size;
-    }
-
-    void Reset()
-    {
-        _top = 0;
-    }
-
-private:
-    std::size_t _size;
-    char *_ptr;
-    std::size_t _top;
-};
-
+/*
+* @brief HeapAllocator is a custom allocator that simply trace the allocations made with
+* std::malloc and std::free.
+*/
 class HeapAllocator final : public Allocator
 {
 public:
-    void *Allocate(std::size_t size, std::size_t typeSize) override
-    {
-        const auto count = size * typeSize;
-        auto* ptr = std::malloc(count);
-#ifdef TRACY_ENABLE
-        TracyAlloc(ptr, count);
-#endif
-        return ptr;
-    }
+    /**
+     * @brief Allocate is a method that allocates a given amount of memory.
+     * @param allocationSize The size of the allocation to do.
+     * @param alignment The alignment in memory of the allocation.
+     * @return A pointer pointing to the memory (aka a void*).
+     */
+    void* Allocate(std::size_t allocationSize, std::size_t alignment) override;
 
-    void Deallocate(void *ptr) override
-    {
-#ifdef TRACY_ENABLE
-        TracyFree(ptr);
-#endif
-        std::free(ptr);
-    }
+    /**
+     * @brief Deallocate is a method that deallocates a block of memory given in parameter.
+     * @param ptr The pointer to the memory block to deallocates.
+     */
+    void Deallocate(void* ptr) override;
 };
 
-class ProxyAllocator : public Allocator
-{
-public:
-    ProxyAllocator(Allocator &targetAllocator) : _targetAllocator(targetAllocator)
-    {}
-
-    void *Allocate(std::size_t count, std::size_t typeSize) override
-    {
-        return _targetAllocator.Allocate(count, typeSize);
-    }
-
-    void Deallocate(void *ptr) override
-    {
-        _targetAllocator.Deallocate(ptr);
-    }
-
-private:
-    Allocator &_targetAllocator;
-};
-
-struct FreeBlock
-{
-    std::size_t size;
-    FreeBlock *next;
-};
-
-class FreeListAllocator : public Allocator
-{
-public:
-    FreeListAllocator(std::size_t size) : _size(size), _ptr(new char[size]), _freeList(_ptr)
-    {
-        FreeBlock *firstBlock = reinterpret_cast<FreeBlock *>(_freeList);
-        firstBlock->size = _size;
-        firstBlock->next = nullptr;
-    }
-
-    ~FreeListAllocator() override
-    {
-        delete[] _ptr;
-    }
-
-    void *Allocate(std::size_t count, std::size_t typeSize) override
-    {
-        FreeBlock *prev = nullptr;
-        FreeBlock *current = reinterpret_cast<FreeBlock *>(_freeList);
-
-        while (current)
-        {
-            if (current->size >= count * typeSize)
-            {
-                if (current->size > count * typeSize)
-                {
-                    char *newBlockPtr = reinterpret_cast<char *>(current) + count * typeSize;
-                    FreeBlock *newBlockHeader = reinterpret_cast<FreeBlock *>(newBlockPtr);
-                    newBlockHeader->size = current->size - count * typeSize;
-                    newBlockHeader->next = current->next;
-                }
-
-                if (prev)
-                {
-                    prev->next = current->next;
-                } else
-                {
-                    _freeList = reinterpret_cast<char *>(current) + count * typeSize;
-                }
-
-                return current + 1;
-            }
-
-            prev = current;
-            current = current->next;
-        }
-
-        throw std::runtime_error("FreeListAllocator out of memory");
-    }
-
-    void Deallocate(void *ptr) override
-    {
-        if (!ptr)
-        {
-            return;
-        }
-
-        char *blockPtr = reinterpret_cast<char *>(ptr) - sizeof(FreeBlock);
-        FreeBlock *firstBlock = reinterpret_cast<FreeBlock *>(blockPtr);
-
-        firstBlock->next = reinterpret_cast<FreeBlock *>(_freeList);
-        _freeList = blockPtr;
-    }
-
-    void Reset()
-    {
-        FreeBlock *firstBlock = reinterpret_cast<FreeBlock *>(_freeList);
-        firstBlock->size = _size;
-        firstBlock->next = nullptr;
-    }
-
-private:
-    std::size_t _size;
-    char *_ptr;
-    char *_freeList;
-};
-
-struct PoolBlock
-{
-    PoolBlock *next;
-};
-
-class PoolAllocator : public Allocator
-{
-public:
-    PoolAllocator(std::size_t blockCount, std::size_t blockSize) : _blockSize(blockSize), _blockCount(blockCount)
-    {
-        _pool = new char[blockSize * blockCount];
-        InitializePoolList();
-    }
-
-    ~PoolAllocator() override
-    {
-        delete[] _pool;
-    }
-
-    void *Allocate(std::size_t count, std::size_t typeSize) override
-    {
-        if (count * typeSize != _blockSize)
-        {
-            throw std::runtime_error("Invalid allocation size for PoolAllocator");
-        }
-
-        if (_poolList == nullptr)
-        {
-            throw std::runtime_error("PoolAllocator out of memory");
-        }
-
-        PoolBlock *allocatedBlock = _poolList;
-        _poolList = _poolList->next;
-        return allocatedBlock;
-    }
-
-    void Deallocate(void *ptr) override
-    {
-        if (!ptr)
-        {
-            return;
-        }
-
-        PoolBlock *deallocatedBlock = reinterpret_cast<PoolBlock *>(ptr);
-        deallocatedBlock->next = _poolList;
-        _poolList = deallocatedBlock;
-    }
-
-    void Reset()
-    {
-        InitializePoolList();
-    }
-
-private:
-    std::size_t _blockSize;
-    std::size_t _blockCount;
-    char *_pool;
-    PoolBlock *_poolList;
-
-    void InitializePoolList()
-    {
-        _poolList = nullptr;
-
-        for (std::size_t i = 0; i < _blockCount; ++i)
-        {
-            char *blockPtr = _pool + i * _blockSize;
-            PoolBlock *blockFirst = reinterpret_cast<PoolBlock *>(blockPtr);
-            blockFirst->next = _poolList;
-            _poolList = blockFirst;
-        }
-    }
-};
-
+/**
+ * @brief StandardAllocator is an implementation of the allocator of the STL but used as a proxy
+ * custom allocator in order to be able to trace allocations.
+ */
 template<typename T>
 class StandardAllocator
 {
-public:
-    typedef T value_type;
-    StandardAllocator(Allocator& allocator);
-    template <class U>
-    StandardAllocator(const StandardAllocator<U>& allocator) noexcept : _allocator(allocator.GetAllocator()) {}
-    T* allocate(std::size_t n);
-    void deallocate(T* ptr, std::size_t n);
-    [[nodiscard]] Allocator& GetAllocator() const { return _allocator; }
 protected:
     Allocator& _allocator;
+
+public:
+    typedef T value_type;
+
+    StandardAllocator(Allocator& allocator);
+
+    template <class U>
+    StandardAllocator(const StandardAllocator<U>& allocator) noexcept :
+        _allocator(allocator.GetAllocator()) {
+    }
+
+    /**
+     * @brief allocate is a method that calls the referenced allocator's Allocate method
+     * that allocates a given amount of memory.
+     * @param n The size of the allocation to do.
+     * @return A pointer pointing to the memory (aka a T*).
+     */
+    T* allocate(std::size_t n);
+
+    /**
+     * @brief deallocate is a method that calls the referenced allocator's Deallocate method
+     * that deallocates a block of memory given in parameter.
+     * @param ptr The pointer to the memory block to deallocates.
+     * * @param n The size of the pointer to deallocate.
+     */
+    void deallocate(T* ptr, std::size_t n);
+
+    [[nodiscard]] Allocator& GetAllocator() const { return _allocator; }
 };
 
 template <class T, class U>

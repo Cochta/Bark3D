@@ -32,6 +32,8 @@ void World::Update(const float deltaTime) noexcept
 #endif
 	UpdateBodies(deltaTime);
 
+
+	//UpdateCollisions();
 	SetUpQuadTree();
 
 	UpdateQuadTreeCollisions(BVH.Nodes[0]);
@@ -300,4 +302,80 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 	}
 	}
 	return false;
+}
+
+void World::UpdateCollisions() noexcept
+{
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
+	for (std::size_t i = 0; i < _colliders.size() - 1; ++i)
+	{
+		ColliderRef colRef1{ i, ColliderGenIndices[i] };
+		auto& col1 = GetCollider(colRef1);
+		col1.BodyPosition = GetBody({ i, ColliderGenIndices[i] }).Position;
+
+		if (!col1.IsAttached)
+		{
+			continue;
+		}
+
+		for (std::size_t j = i + 1; j < _colliders.size(); ++j)
+		{
+			ColliderRef colRef2{ j, ColliderGenIndices[j] };
+			auto& col2 = GetCollider(colRef2);
+
+			if (!col2.IsAttached)
+			{
+				continue;
+			}
+
+			if (!col2.IsTrigger && !col1.IsTrigger) // physical collision
+			{
+				if (!Overlap(col1, col2))
+				{
+					if (_contactListener == nullptr)
+					{
+						return;
+					}
+					_contactListener->OnCollisionExit(colRef1, colRef2);
+				}
+				else
+				{
+					Contact contact;
+					contact.CollidingBodies[0] = { &GetBody(col1.BodyRef), &col1 };
+					contact.CollidingBodies[1] = { &GetBody(col2.BodyRef), &col2 };
+					contact.Resolve();
+					if (_contactListener == nullptr)
+					{
+						return;
+					}
+					_contactListener->OnCollisionEnter(colRef1, colRef2);
+				}
+
+				continue;
+			}
+
+			if (_contactListener == nullptr)
+			{
+				return;
+			}
+
+			if (_colRefPairs.find({ colRef1, colRef2 }) != _colRefPairs.end())
+			{
+				if (!Overlap(col1, col2))
+				{
+					_contactListener->OnTriggerExit(colRef1, colRef2);
+					_colRefPairs.erase({ colRef1, colRef2 });
+				}
+				continue;
+			}
+
+			if (Overlap(col1, col2))
+			{
+				_contactListener->OnTriggerEnter(colRef1, colRef2);
+				_colRefPairs.insert({ colRef1, colRef2 });
+			}
+		}
+	}
 }

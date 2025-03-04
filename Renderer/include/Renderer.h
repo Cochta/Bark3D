@@ -27,6 +27,7 @@ public:
 	void renderScene(void);
 
 private:
+	GLuint sphereDisplayList = 0;
 
 	void DrawSphere(XMVECTOR center, float radius, int segments, const Color& col) noexcept;
 
@@ -39,5 +40,7 @@ private:
 	//Time
 	int prevTime, currentTime;
 	float deltaTime;
+
+	void InitializeDisplayList();
 
 };

@@ -171,7 +171,9 @@ void Renderer::DrawSphere(const XMVECTOR center, const float radius,
 	glPushMatrix();
 	glColor3f(col.r / 255.f, col.g / 255.f, col.b / 255.f);
 	glTranslatef(XMVectorGetX(center), XMVectorGetY(center), XMVectorGetZ(center));
-	glutSolidSphere(radius, segments, segments);
+	//glutSolidSphere(radius, segments, segments);
+	glScalef(radius, radius, radius); // Scale the unit sphere to match the desired radius
+	glCallList(sphereDisplayList);
 	glPopMatrix();
 }
 
@@ -290,6 +292,9 @@ void Renderer::DrawAllGraphicsData() noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
+
+	InitializeDisplayList();
+
 	for (auto& bd : _sampleManager.GetSampleData()) {
 		if (bd.Shape.index() == (int)ShapeType::Sphere) {
 			auto& sphere = std::get<SphereF>(bd.Shape);
@@ -304,5 +309,14 @@ void Renderer::DrawAllGraphicsData() noexcept {
 				Drawcuboid(rect.MinBound(), rect.MaxBound(), { bd.Color });
 			}
 		}
+	}
+}
+
+void Renderer::InitializeDisplayList() {
+	if (sphereDisplayList == 0) {
+		sphereDisplayList = glGenLists(1);
+		glNewList(sphereDisplayList, GL_COMPILE);
+		glutSolidSphere(1.0f, 30, 30); // Precompile a unit sphere
+		glEndList();
 	}
 }

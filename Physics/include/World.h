@@ -27,6 +27,8 @@ public:
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */
 	BVH BVH{ _heapAlloc };/**< BVH for collision checks */
+
+
 	/**
 	 * @brief Default constructor for the _world class.
 	 */
@@ -119,4 +121,6 @@ private:
 	 * @return true if the colliders overlap, false otherwise.
 	 */
 	[[nodiscard]] bool Overlap(const Collider& colA, const Collider& colB) noexcept;
+
+	void UpdateCollisions() noexcept;
 };

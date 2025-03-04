@@ -21,6 +21,12 @@ void WaterBathSample::OnCollisionExit(ColliderRef col1,
 void WaterBathSample::SampleSetUp() noexcept {
 	_world.SetContactListener(this);
 
+	for (size_t i = 0; i < NBPARTICLES; i++) {
+		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
+	}
+
 	// Create static cuboid for ground
 	const auto groundRef = _world.CreateBody();
 	_bodyRefs.push_back(groundRef);
@@ -122,11 +128,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 
 	AllGraphicsData.emplace_back(gd);
 
-	for (size_t i = 0; i < NBPARTICLES; i++) {
-		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
-	}
+
 
 }
 void WaterBathSample::SampleUpdate() noexcept {
@@ -183,7 +185,7 @@ void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
 	const auto sphereColRef = _world.CreateCollider(sphereBodyRef);
 	_colRefs.push_back(sphereColRef);
 	auto& sphereCol = _world.GetCollider(sphereColRef);
-	sphereCol.Shape = Sphere(XMVectorZero(), Metrics::MetersToPixels(0.05f));
+	sphereCol.Shape = Sphere(XMVectorZero(), PARTICLESIZE);
 	sphereCol.BodyPosition = sphereBody.Position;
 	sphereCol.Restitution = 0.f;
 	//sphereCol.IsTrigger = true;
