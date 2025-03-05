@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DirectXMath.h>
+#include <optional>
 
 using namespace DirectX;
 
@@ -10,6 +11,15 @@ enum class BodyType { DYNAMIC, STATIC, NONE };
  * @brief Represents a 2D body with position, velocity, and mass.
  * @note A body is disabled if its mass is negative.
  */
+
+struct ParticleData {
+	float Density = 1.0f;
+	float Pressure = 0.0f;
+	float SmoothingLength = 1.0f;
+	float Viscosity = 0.1f;
+	//XMVECTOR Acceleration = XMVectorZero();
+};
+
 class Body {
 public:
 	XMVECTOR Position = XMVectorZero();
@@ -18,8 +28,12 @@ public:
 	float Mass = -1.f;  // Body is disabled if mass is negative
 	BodyType Type = BodyType::DYNAMIC;
 
+
+	std::optional<ParticleData> ParticleData; // Only set if this body is a fluid particle
+
 private:
 	XMVECTOR _force = XMVectorZero(); // Total force acting on the body
+
 
 public:
 	/**

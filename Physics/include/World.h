@@ -26,7 +26,7 @@ private:
 public:
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */
-	BVH BVH{ _heapAlloc };/**< BVH for collision checks */
+	OctTree OctTree{ _heapAlloc };/**< OctTree for collision checks */
 
 
 	/**
@@ -105,14 +105,15 @@ private:
 	void UpdateBodies(const float deltaTime) noexcept;
 
 	/**
-	 * @brief Initialisation of the BVH.
+	 * @brief Initialisation of the OctTree.
 	 */
 	void SetUpQuadTree() noexcept;
 	/**
-	 * @brief recursive update of the BVH.
+	 * @brief recursive update of the OctTree.
 	 * @param node the root node
 	 */
-	void UpdateQuadTreeCollisions(const BVHNode& node)noexcept;
+	void UpdateQuadTreeCollisions(const BVHNode& node) noexcept;
+
 
 	/**
 	 * @brief Check if two colliders overlap.
@@ -122,5 +123,7 @@ private:
 	 */
 	[[nodiscard]] bool Overlap(const Collider& colA, const Collider& colB) noexcept;
 
-	void UpdateCollisions() noexcept;
+	void UpdateGlobalCollisions() noexcept; //old code unused
+
+	void ProcessFluidInteraction(Body& p1, Body& p2, float smoothingLength) noexcept;
 };

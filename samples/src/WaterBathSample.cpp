@@ -11,11 +11,11 @@ std::string WaterBathSample::GetDescription() noexcept {
 }
 
 void WaterBathSample::OnCollisionEnter(ColliderRef col1,
-									   ColliderRef col2) noexcept {
+	ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::OnCollisionExit(ColliderRef col1,
-									  ColliderRef col2) noexcept {
+	ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::SampleSetUp() noexcept {
@@ -40,7 +40,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_colRefs.push_back(groundColRef);
 	auto& groundCol = _world.GetCollider(groundColRef);
 	groundCol.Shape = CuboidF({ -WALLDIST, -WALLSIZE, -WALLDIST },
-							  { WALLDIST, WALLSIZE, WALLDIST });
+		{ WALLDIST, WALLSIZE, WALLDIST });
 	groundCol.BodyPosition = groundBody.Position;
 	groundCol.Restitution = 0.f;
 
@@ -63,7 +63,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_colRefs.push_back(wall1ColRef);
 	auto& wall1Col = _world.GetCollider(wall1ColRef);
 	wall1Col.Shape = CuboidF({ -WALLSIZE, -WALLDIST, -WALLDIST },
-							 { WALLSIZE, WALLDIST, WALLDIST });
+		{ WALLSIZE, WALLDIST, WALLDIST });
 	wall1Col.BodyPosition = wall1Body.Position;
 	wall1Col.Restitution = 0.f;
 
@@ -84,7 +84,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_colRefs.push_back(wall2ColRef);
 	auto& wall2Col = _world.GetCollider(wall2ColRef);
 	wall2Col.Shape = CuboidF({ -WALLSIZE, -WALLDIST, -WALLDIST },
-							 { WALLSIZE, WALLDIST, WALLDIST });
+		{ WALLSIZE, WALLDIST, WALLDIST });
 	wall2Col.BodyPosition = wall2Body.Position;
 	wall2Col.Restitution = 0.f;
 
@@ -103,7 +103,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_colRefs.push_back(wall3ColRef);
 	auto& wall3Col = _world.GetCollider(wall3ColRef);
 	wall3Col.Shape = CuboidF({ -WALLDIST, -WALLDIST, -WALLSIZE },
-							 { WALLDIST, WALLDIST, WALLSIZE });
+		{ WALLDIST, WALLDIST, WALLSIZE });
 	wall3Col.BodyPosition = wall3Body.Position;
 	wall3Col.Restitution = 0.f;
 
@@ -122,7 +122,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_colRefs.push_back(wall4ColRef);
 	auto& wall4Col = _world.GetCollider(wall4ColRef);
 	wall4Col.Shape = CuboidF({ -WALLDIST, -WALLDIST, -WALLSIZE },
-							 { WALLDIST,WALLDIST, WALLSIZE });
+		{ WALLDIST,WALLDIST, WALLSIZE });
 	wall4Col.BodyPosition = wall4Body.Position;
 	wall4Col.Restitution = 0.f;
 
@@ -144,29 +144,29 @@ void WaterBathSample::SampleUpdate() noexcept {
 
 		switch (shape.index()) {
 		case static_cast<int>(ShapeType::Sphere):
-		//fix to reduce quadtree size
+			//fix to reduce quadtree size
 
-		if (XMVectorGetY(col.BodyPosition) <= -500)
-		{
-			_world.GetBody(col.BodyRef).Position = XMVectorZero();
-		}
+			if (XMVectorGetY(col.BodyPosition) <= -500)
+			{
+				_world.GetBody(col.BodyRef).Position = XMVectorZero();
+			}
 
-		_world.GetBody(col.BodyRef).ApplyForce({ 0, GRAV,0 });
-		AllGraphicsData[i].Shape =
-			std::get<SphereF>(shape) + col.BodyPosition;
+			_world.GetBody(col.BodyRef).ApplyForce({ 0, GRAV,0 });
+			AllGraphicsData[i].Shape =
+				std::get<SphereF>(shape) + col.BodyPosition;
 
-		break;
+			break;
 		case static_cast<int>(ShapeType::Cuboid):
-		AllGraphicsData[i].Shape =
-			std::get<CuboidF>(shape) + col.BodyPosition;
-		break;
+			AllGraphicsData[i].Shape =
+				std::get<CuboidF>(shape) + col.BodyPosition;
+			break;
 		default:
-		break;
+			break;
 		}
 	}
 
 	//_quadTreeGraphicsData.clear();
-	//DrawQuadtree(_world.BVH.Nodes[0]);
+	//DrawQuadtree(_world.OctTree.Nodes[0]);
 	//AllGraphicsData.insert(AllGraphicsData.end(), _quadTreeGraphicsData.begin(),
 	//					   _quadTreeGraphicsData.end());
 }
@@ -191,7 +191,14 @@ void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
 	//sphereCol.IsTrigger = true;
 
 	GraphicsData gd;
-	gd.Color = { 170,213,219 };
+	sphereBody.ParticleData = ParticleData{};
+	if (sphereBody.ParticleData.has_value())
+	{
+		
+		gd.Color = { 170,213,219 };
+	}
+	else
+		gd.Color = { 255,0,0 };
 
 	AllGraphicsData.emplace_back(gd);
 }

@@ -27,8 +27,8 @@ THE SOFTWARE.
 // Use this in *one* .c or .cpp
 //   #define TINYBVH_IMPLEMENTATION
 //   #include "tiny_bvh.h"
-// Instantiate a BVH and build it for a list of triangles:
-//   BVH bvh;
+// Instantiate a OctTree and build it for a list of triangles:
+//   OctTree bvh;
 //   bvh.Build( (bvhvec4*)myVerts, numTriangles );
 //   Ray ray( bvhvec3( 0, 0, 0 ), bvhvec3( 0, 0, 1 ), 1e30f );
 //   bvh.Intersect( ray );
@@ -51,7 +51,7 @@ THE SOFTWARE.
 //   #include <tiny_bvh.h>
 
 // tinybvh can be further configured using #defines, to be specified before the #include:
-// #define BVHBINS 8        - the number of bins to use in regular BVH construction. Default is 8.
+// #define BVHBINS 8        - the number of bins to use in regular OctTree construction. Default is 8.
 // #define HQBVHBINS 32     - the number of bins to use in SBVH construction. Default is 8.
 // #define INST_IDX_BITS 10 - the number of bits to use for the instance index. Default is 32,
 //                            which stores the bits in a separate field in tinybvh::Intersection.
@@ -59,7 +59,7 @@ THE SOFTWARE.
 // #define C_TRAV 1         - the estimated cost of a traversal step. Default is 1.
 
 // See tiny_bvh_test.cpp for basic usage. In short:
-// instantiate a BVH: tinybvh::BVH bvh;
+// instantiate a OctTree: tinybvh::OctTree bvh;
 // build it: bvh.Build( (tinybvh::bvhvec4*)triangleData, TRIANGLE_COUNT );
 // ..where triangleData is an array of four-component float vectors:
 // - For a single triangle, provide 3 vertices,
@@ -67,13 +67,13 @@ THE SOFTWARE.
 // The fourth float in each vertex is a dummy value and exists purely for
 // a more efficient layout of the data in memory.
 
-// More information about the BVH data structure:
+// More information about the OctTree data structure:
 // https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics
 
 // Further references: See README.md
 
 // Author and contributors:
-// Jacco Bikker: BVH code and examples
+// Jacco Bikker: OctTree code and examples
 // Eddy L O Jansson: g++ / clang support
 // Aras Pranckevičius: non-Intel architecture support
 // Jefferson Amstutz: CMake support
@@ -89,7 +89,7 @@ THE SOFTWARE.
 // #define PARANOID // checks out-of-bound access of slices
 // #define SLICEDUMP // dumps the slice used for building to a file - debug feature.
 
-// Binned BVH building: bin count.
+// Binned OctTree building: bin count.
 #ifndef BVHBINS
 #define BVHBINS 8
 #endif
@@ -113,10 +113,10 @@ THE SOFTWARE.
 #define PRIM_IDX_MASK ((1 << INST_IDX_SHFT) - 1) // instance index stored in top bits of hit.prim.
 #endif
 
-// SAH BVH building: Heuristic parameters
+// SAH OctTree building: Heuristic parameters
 // CPU traversal: C_INT = 1, C_TRAV = 1 seems optimal.
 // These are defaults, which initialize the public members c_int and c_trav in
-// BVHBase (and thus each BVH instance). 
+// BVHBase (and thus each OctTree instance). 
 #ifndef C_INT
 #define C_INT	1
 #endif
@@ -155,7 +155,7 @@ THE SOFTWARE.
 // We'll use this whenever a layout has no specialized shadow ray query.
 #define FALLBACK_SHADOW_QUERY( s ) { Ray r = s; float d = s.hit.t; Intersect( r ); return r.hit.t < d; }
 
-// include fast AVX BVH builder
+// include fast AVX OctTree builder
 #ifndef TINYBVH_NO_SIMD
 #if defined(__x86_64__) || defined(_M_X64) || defined(__wasm_simd128__) || defined(__wasm_relaxed_simd__)
 #define BVH_USEAVX		// required for BuildAVX, BVH_SoA and others
@@ -629,7 +629,7 @@ public:
 	enum BVHType : uint32_t
 	{
 		// Every BVHJ class is derived from BVHBase, but we don't use virtual functions, for
-		// performance reasons. For a TLAS over a mix of BVH layouts we do however need this
+		// performance reasons. For a TLAS over a mix of OctTree layouts we do however need this
 		// kind of behavior when transitioning from a TLAS leaf to a BLAS root node.
 		UNDEFINED = 0,
 		LAYOUT_BVH = 1,
@@ -655,27 +655,27 @@ public:
 		uint32_t clipped = 0;		// Fragment is the result of clipping if > 0.
 		bool validBox() { return bmin.x < BVH_FAR; }
 	};
-	// BVH flags, maintainted by tiny_bvh.
+	// OctTree flags, maintainted by tiny_bvh.
 	bool rebuildable = true;		// rebuilds are safe only if a tree has not been converted.
 	bool refittable = true;			// refits are safe only if the tree has no spatial splits.
 	bool may_have_holes = false;	// threaded builds and MergeLeafs produce BVHs with unused nodes.
-	bool bvh_over_aabbs = false;	// a BVH over AABBs is useful for e.g. TLAS traversal.
-	bool bvh_over_indices = false;	// a BVH over indices cannot translate primitive index to vertex index.
+	bool bvh_over_aabbs = false;	// a OctTree over AABBs is useful for e.g. TLAS traversal.
+	bool bvh_over_indices = false;	// a OctTree over indices cannot translate primitive index to vertex index.
 	BVHContext context;				// context used to provide user-defined allocation functions
-	BVHType layout = UNDEFINED;		// BVH layout identifier
+	BVHType layout = UNDEFINED;		// OctTree layout identifier
 	// Keep track of allocated buffer size to avoid repeated allocation during layout conversion.
-	uint32_t allocatedNodes = 0;	// number of nodes allocated for the BVH.
-	uint32_t usedNodes = 0;			// number of nodes used for the BVH.
-	uint32_t triCount = 0;			// number of primitives in the BVH.
+	uint32_t allocatedNodes = 0;	// number of nodes allocated for the OctTree.
+	uint32_t usedNodes = 0;			// number of nodes used for the OctTree.
+	uint32_t triCount = 0;			// number of primitives in the OctTree.
 	uint32_t idxCount = 0;			// number of primitive indices; can exceed triCount for SBVH.
 	float c_trav = C_TRAV;			// cost of a traversal step, used to steer SAH construction.
 	float c_int = C_INT;			// cost of a primitive intersection, used to steer SAH construction.
-	bvhvec3 aabbMin, aabbMax;		// bounds of the root node of the BVH.
+	bvhvec3 aabbMin, aabbMax;		// bounds of the root node of the OctTree.
 	// Custom memory allocation
 	void* AlignedAlloc( size_t size );
 	void AlignedFree( void* ptr );
 	// Common methods
-	void CopyBasePropertiesFrom( const BVHBase& original );	// copy flags from one BVH to another
+	void CopyBasePropertiesFrom( const BVHBase& original );	// copy flags from one OctTree to another
 protected:
 	~BVHBase() {}
 	__FORCEINLINE void IntersectTri( Ray& ray, const bvhvec4slice& verts, const uint32_t primIdx ) const;
@@ -689,7 +689,7 @@ protected:
 
 class BLASInstance;
 class BVH_Verbose;
-class BVH : public BVHBase
+class OctTree : public BVHBase
 {
 public:
 	friend class BVH_GPU;
@@ -704,20 +704,20 @@ public:
 	};
 	struct BVHNode
 	{
-		// 'Traditional' 32-byte BVH node layout, as proposed by Ingo Wald.
+		// 'Traditional' 32-byte OctTree node layout, as proposed by Ingo Wald.
 		// When aligned to a cache line boundary, two of these fit together.
 		bvhvec3 aabbMin; uint32_t leftFirst; // 16 bytes
 		bvhvec3 aabbMax; uint32_t triCount;	// 16 bytes, total: 32 bytes
-		bool isLeaf() const { return triCount > 0; /* empty BVH leaves do not exist */ }
-		float Intersect( const Ray& ray ) const { return BVH::IntersectAABB( ray, aabbMin, aabbMax ); }
+		bool isLeaf() const { return triCount > 0; /* empty OctTree leaves do not exist */ }
+		float Intersect( const Ray& ray ) const { return OctTree::IntersectAABB( ray, aabbMin, aabbMax ); }
 		bool Intersect( const bvhvec3& bmin, const bvhvec3& bmax ) const;
-		float SurfaceArea() const { return BVH::SA( aabbMin, aabbMax ); }
+		float SurfaceArea() const { return OctTree::SA( aabbMin, aabbMax ); }
 	};
-	BVH( BVHContext ctx = {} ) { layout = LAYOUT_BVH; context = ctx; }
-	BVH( const BVH_Verbose& original ) { layout = LAYOUT_BVH; ConvertFrom( original ); }
-	BVH( const bvhvec4* vertices, const uint32_t primCount ) { layout = LAYOUT_BVH; Build( vertices, primCount ); }
-	BVH( const bvhvec4slice& vertices ) { layout = LAYOUT_BVH; Build( vertices ); }
-	~BVH();
+	OctTree( BVHContext ctx = {} ) { layout = LAYOUT_BVH; context = ctx; }
+	OctTree( const BVH_Verbose& original ) { layout = LAYOUT_BVH; ConvertFrom( original ); }
+	OctTree( const bvhvec4* vertices, const uint32_t primCount ) { layout = LAYOUT_BVH; Build( vertices, primCount ); }
+	OctTree( const bvhvec4slice& vertices ) { layout = LAYOUT_BVH; Build( vertices ); }
+	~OctTree();
 	void ConvertFrom( const BVH_Verbose& original, bool compact = true );
 	void SplitLeafs( const uint32_t maxPrims );
 	float SAHCost( const uint32_t nodeIdx = 0 ) const;
@@ -779,19 +779,19 @@ protected:
 	void BuildDefault( const bvhvec4* vertices, const uint32_t* indices, const uint32_t primCount );
 	void BuildDefault( const bvhvec4slice& vertices, const uint32_t* indices, const uint32_t primCount );
 public:
-	// BVH type identification
+	// OctTree type identification
 	bool isTLAS() const { return instList != 0; }
 	bool isBLAS() const { return instList == 0; }
 	bool isIndexed() const { return vertIdx != 0; }
 	bool hasCustomGeom() const { return customIntersect != 0; }
-	// Basic BVH data
+	// Basic OctTree data
 	bvhvec4slice verts = {};		// pointer to input primitive array: 3x16 bytes per tri.
-	uint32_t* vertIdx = 0;			// vertex indices, only used in case the BVH is built over indexed prims.
+	uint32_t* vertIdx = 0;			// vertex indices, only used in case the OctTree is built over indexed prims.
 	uint32_t* primIdx = 0;			// primitive index array.
 	BLASInstance* instList = 0;		// instance array, for top-level acceleration structure.
 	BVHBase** blasList = 0;			// blas array, for TLAS traversal.
 	uint32_t blasCount = 0;			// number of blasses in blasList.
-	BVHNode* bvhNode = 0;			// BVH node pool, Wald 32-byte format. Root is always in node 0.
+	BVHNode* bvhNode = 0;			// OctTree node pool, Wald 32-byte format. Root is always in node 0.
 	uint32_t newNodePtr = 0;		// used during build to keep track of next free node in pool.
 	Fragment* fragment = 0;			// input primitive bounding boxes.
 	// Custom geometry intersection callback
@@ -807,13 +807,13 @@ class BVH_Double : public BVHBase
 public:
 	struct BVHNode
 	{
-		// Double precision 'traditional' BVH node layout.
+		// Double precision 'traditional' OctTree node layout.
 		// Compared to the default BVHNode, child node indices and triangle indices
 		// are also expanded to 64bit values to support massive scenes.
 		bvhdbl3 aabbMin, aabbMax; // 2x24 bytes
 		uint64_t leftFirst; // 8 bytes
 		uint64_t triCount; // 8 bytes, total: 64 bytes
-		bool isLeaf() const { return triCount > 0; /* empty BVH leaves do not exist */ }
+		bool isLeaf() const { return triCount > 0; /* empty OctTree leaves do not exist */ }
 		double Intersect( const RayEx& ray ) const;
 		double SurfaceArea() const;
 	};
@@ -837,18 +837,18 @@ public:
 	int32_t IntersectTLAS( RayEx& ray ) const;
 	bvhdbl3* verts = 0;				// pointer to input primitive array, double-precision, 3x24 bytes per tri.
 	Fragment* fragment = 0;			// input primitive bounding boxes, double-precision.
-	BVHNode* bvhNode = 0;			// BVH node, double precision format.
+	BVHNode* bvhNode = 0;			// OctTree node, double precision format.
 	uint64_t* primIdx = 0;			// primitive index array for double-precision bvh.
 	BLASInstanceEx* instList = 0;	// instance array, for top-level acceleration structure.
 	BVH_Double** blasList = 0;		// blas array, for TLAS traversal.
 	uint64_t blasCount = 0;			// number of blasses in blasList.
 	// 64-bit base overrides
 	uint64_t newNodePtr = 0;		// next free bvh pool entry to allocate
-	uint64_t usedNodes = 0;			// number of nodes used for the BVH.
-	uint64_t allocatedNodes = 0;	// number of nodes allocated for the BVH.
-	uint64_t triCount = 0;			// number of primitives in the BVH.
+	uint64_t usedNodes = 0;			// number of nodes used for the OctTree.
+	uint64_t allocatedNodes = 0;	// number of nodes allocated for the OctTree.
+	uint64_t triCount = 0;			// number of primitives in the OctTree.
 	uint64_t idxCount = 0;			// number of primitive indices.
-	bvhdbl3 aabbMin, aabbMax;		// bounds of the root node of the BVH.
+	bvhdbl3 aabbMin, aabbMax;		// bounds of the root node of the OctTree.
 	// Custom geometry intersection callback
 	bool (*customIntersect)(RayEx&, uint64_t) = 0;
 	bool (*customIsOccluded)(const RayEx&, uint64_t) = 0;
@@ -861,7 +861,7 @@ class BVH_GPU : public BVHBase
 public:
 	struct BVHNode
 	{
-		// Alternative 64-byte BVH node layout, which specifies the bounds of
+		// Alternative 64-byte OctTree node layout, which specifies the bounds of
 		// the children rather than the node itself. This layout is used by
 		// Aila and Laine in their seminal GPU ray tracing paper.
 		bvhvec3 lmin; uint32_t left;
@@ -871,7 +871,7 @@ public:
 		bool isLeaf() const { return triCount > 0; }
 	};
 	BVH_GPU( BVHContext ctx = {} ) { layout = LAYOUT_BVH_GPU; context = ctx; }
-	BVH_GPU( const BVH& original ) { /* DEPRICATED */ ConvertFrom( original ); }
+	BVH_GPU( const OctTree& original ) { /* DEPRICATED */ ConvertFrom( original ); }
 	~BVH_GPU();
 	void Build( const bvhvec4* vertices, const uint32_t primCount );
 	void Build( const bvhvec4slice& vertices );
@@ -884,12 +884,12 @@ public:
 	void BuildHQ( const bvhvec4slice& vertices, const uint32_t* indices, const uint32_t primCount );
 	void Optimize( const uint32_t iterations = 25, bool extreme = false );
 	float SAHCost( const uint32_t nodeIdx = 0 ) const { return bvh.SAHCost( nodeIdx ); }
-	void ConvertFrom( const BVH& original, bool compact = true );
+	void ConvertFrom( const OctTree& original, bool compact = true );
 	int32_t Intersect( Ray& ray ) const;
 	bool IsOccluded( const Ray& ray ) const { FALLBACK_SHADOW_QUERY( ray ); }
-	// BVH data
-	BVHNode* bvhNode = 0;			// BVH node in Aila & Laine format.
-	BVH bvh;						// BVH4 is created from BVH and uses its data.
+	// OctTree data
+	BVHNode* bvhNode = 0;			// OctTree node in Aila & Laine format.
+	OctTree bvh;						// BVH4 is created from OctTree and uses its data.
 	bool ownBVH = true;				// False when ConvertFrom receives an external bvh.
 };
 
@@ -898,14 +898,14 @@ class BVH_SoA : public BVHBase
 public:
 	struct BVHNode
 	{
-		// Second alternative 64-byte BVH node layout, same as BVHAilaLaine but
+		// Second alternative 64-byte OctTree node layout, same as BVHAilaLaine but
 		// with child AABBs stored in SoA order.
 		SIMDVEC4 xxxx, yyyy, zzzz;
 		uint32_t left, right, triCount, firstTri; // total: 64 bytes
 		bool isLeaf() const { return triCount > 0; }
 	};
 	BVH_SoA( BVHContext ctx = {} ) { layout = LAYOUT_BVH_SOA; context = ctx; }
-	BVH_SoA( const BVH& original ) { /* DEPRICATED */ layout = LAYOUT_BVH_SOA; ConvertFrom( original ); }
+	BVH_SoA( const OctTree& original ) { /* DEPRICATED */ layout = LAYOUT_BVH_SOA; ConvertFrom( original ); }
 	~BVH_SoA();
 	void Build( const bvhvec4* vertices, const uint32_t primCount );
 	void Build( const bvhvec4slice& vertices );
@@ -921,12 +921,12 @@ public:
 	bool Load( const char* fileName, const bvhvec4* vertices, const uint32_t primCount );
 	bool Load( const char* fileName, const bvhvec4* vertices, const uint32_t* indices, const uint32_t primCount );
 	bool Load( const char* fileName, const bvhvec4slice& vertices, const uint32_t* indices = 0, const uint32_t primCount = 0 );
-	void ConvertFrom( const BVH& original, bool compact = true );
+	void ConvertFrom( const OctTree& original, bool compact = true );
 	int32_t Intersect( Ray& ray ) const;
 	bool IsOccluded( const Ray& ray ) const;
-	// BVH data
-	BVHNode* bvhNode = 0;			// BVH node in 'structure of arrays' format.
-	BVH bvh;						// BVH_SoA is created from BVH and uses its data.
+	// OctTree data
+	BVHNode* bvhNode = 0;			// OctTree node in 'structure of arrays' format.
+	OctTree bvh;						// BVH_SoA is created from OctTree and uses its data.
 	bool ownBVH = true;				// False when ConvertFrom receives an external bvh.
 };
 
@@ -937,18 +937,18 @@ public:
 	{
 		// This node layout has some extra data per node: It stores left and right
 		// child node indices explicitly, and stores the index of the parent node.
-		// This format exists primarily for the BVH optimizer.
+		// This format exists primarily for the OctTree optimizer.
 		bvhvec3 aabbMin; uint32_t left;
 		bvhvec3 aabbMax; uint32_t right;
 		uint32_t triCount, firstTri, parent;
 		float dummy[5]; // total: 64 bytes.
 		bool isLeaf() const { return triCount > 0; }
-		float SA() const { return BVH::SA( aabbMin, aabbMax ); }
+		float SA() const { return OctTree::SA( aabbMin, aabbMax ); }
 	};
 	BVH_Verbose( BVHContext ctx = {} ) { layout = LAYOUT_BVH_VERBOSE; context = ctx; }
-	BVH_Verbose( const BVH& original ) { /* DEPRECATED */ layout = LAYOUT_BVH_VERBOSE; ConvertFrom( original ); }
+	BVH_Verbose( const OctTree& original ) { /* DEPRECATED */ layout = LAYOUT_BVH_VERBOSE; ConvertFrom( original ); }
 	~BVH_Verbose() { AlignedFree( bvhNode ); }
-	void ConvertFrom( const BVH& original, bool compact = true );
+	void ConvertFrom( const OctTree& original, bool compact = true );
 	float SAHCost( const uint32_t nodeIdx = 0 ) const;
 	int32_t NodeCount() const;
 	int32_t PrimCount( const uint32_t nodeIdx = 0 ) const;
@@ -966,11 +966,11 @@ private:
 	uint32_t CountSubtreeTris( const uint32_t nodeIdx, uint32_t* counters );
 	void MergeSubtree( const uint32_t nodeIdx, uint32_t* newIdx, uint32_t& newIdxPtr );
 public:
-	// BVH data
+	// OctTree data
 	bvhvec4slice verts = {};		// pointer to input primitive array: 3x16 bytes per tri.
 	Fragment* fragment = 0;			// input primitive bounding boxes, double-precision.
 	uint32_t* primIdx = 0;			// primitive index array - pointer copied from original.
-	BVHNode* bvhNode = 0;			// BVH node with additional info, for BVH optimizer.
+	BVHNode* bvhNode = 0;			// OctTree node with additional info, for OctTree optimizer.
 };
 
 template <int M> class MBVH : public BVHBase
@@ -978,7 +978,7 @@ template <int M> class MBVH : public BVHBase
 public:
 	struct MBVHNode
 	{
-		// M-wide (aka 'shallow') BVH layout.
+		// M-wide (aka 'shallow') OctTree layout.
 		bvhvec3 aabbMin; uint32_t firstTri;
 		bvhvec3 aabbMax; uint32_t triCount;
 		uint32_t child[M];
@@ -987,7 +987,7 @@ public:
 		bool isLeaf() const { return triCount > 0; }
 	};
 	MBVH( BVHContext ctx = {} ) { layout = LAYOUT_MBVH; context = ctx; }
-	MBVH( const BVH& original ) { /* DEPRECATED */ layout = LAYOUT_MBVH; ConvertFrom( original ); }
+	MBVH( const OctTree& original ) { /* DEPRECATED */ layout = LAYOUT_MBVH; ConvertFrom( original ); }
 	~MBVH();
 	void Build( const bvhvec4* vertices, const uint32_t primCount );
 	void Build( const bvhvec4slice& vertices );
@@ -1001,10 +1001,10 @@ public:
 	void Refit( const uint32_t nodeIdx = 0 );
 	uint32_t LeafCount( const uint32_t nodeIdx = 0 ) const;
 	float SAHCost( const uint32_t nodeIdx = 0 ) const;
-	void ConvertFrom( const BVH& original, bool compact = true );
-	// BVH data
-	MBVHNode* mbvhNode = 0;			// BVH node for M-wide BVH.
-	BVH bvh;						// MBVH<M> is created from BVH and uses its data.
+	void ConvertFrom( const OctTree& original, bool compact = true );
+	// OctTree data
+	MBVHNode* mbvhNode = 0;			// OctTree node for M-wide OctTree.
+	OctTree bvh;						// MBVH<M> is created from OctTree and uses its data.
 	bool ownBVH = true;				// False when ConvertFrom receives an external bvh.
 };
 
@@ -1013,7 +1013,7 @@ class BVH4_GPU : public BVHBase
 public:
 	struct BVHNode // actual struct is unused; left here to show structure of data in bvh4Data.
 	{
-		// 4-way BVH node, optimized for GPU rendering
+		// 4-way OctTree node, optimized for GPU rendering
 		struct aabb8 { uint8_t xmin, ymin, zmin, xmax, ymax, zmax; }; // quantized
 		bvhvec3 aabbMin; uint32_t c0Info;			// 16
 		bvhvec3 aabbExt; uint32_t c1Info;			// 16
@@ -1022,7 +1022,7 @@ public:
 		// childInfo, 32bit:
 		// msb:        0=interior, 1=leaf
 		// leaf:       16 bits: relative start of triangle data, 15 bits: triangle count.
-		// interior:   31 bits: child node address, in float4s from BVH data start.
+		// interior:   31 bits: child node address, in float4s from OctTree data start.
 		// Triangle data: directly follows nodes with leaves. Per tri:
 		// - bvhvec4 vert0, vert1, vert2
 		// - uint vert0.w stores original triangle index.
@@ -1046,8 +1046,8 @@ public:
 	float SAHCost( const uint32_t nodeIdx = 0 ) const { return bvh4.SAHCost( nodeIdx ); }
 	int32_t Intersect( Ray& ray ) const;
 	bool IsOccluded( const Ray& ray ) const { FALLBACK_SHADOW_QUERY( ray ); }
-	// BVH data
-	bvhvec4* bvh4Data = 0;			// 64-byte 4-wide BVH node for efficient GPU rendering.
+	// OctTree data
+	bvhvec4* bvh4Data = 0;			// 64-byte 4-wide OctTree node for efficient GPU rendering.
 	uint32_t allocatedBlocks = 0;	// node data and triangles are stored in 16-byte blocks.
 	uint32_t usedBlocks = 0;		// actually used storage.
 	MBVH<4> bvh4;					// BVH4_CPU is created from BVH4 and uses its data.
@@ -1059,7 +1059,7 @@ class BVH4_CPU : public BVHBase
 public:
 	struct BVHNode
 	{
-		// 4-way BVH node, optimized for CPU rendering.
+		// 4-way OctTree node, optimized for CPU rendering.
 		// Based on: "Faster Incoherent Ray Traversal Using 8-Wide AVX Instructions",
 		// Áfra, 2013.
 		SIMDVEC4 xmin4, ymin4, zmin4;
@@ -1085,8 +1085,8 @@ public:
 	void ConvertFrom( const MBVH<4>& original, bool compact = true );
 	int32_t Intersect( Ray& ray ) const;
 	bool IsOccluded( const Ray& ray ) const;
-	// BVH data
-	BVHNode* bvh4Node = 0;			// 128-byte 4-wide BVH node for efficient CPU rendering.
+	// OctTree data
+	BVHNode* bvh4Node = 0;			// 128-byte 4-wide OctTree node for efficient CPU rendering.
 	bvhvec4* bvh4Tris = 0;			// triangle data for BVHNode4Alt2 nodes.
 	MBVH<4> bvh4;					// BVH4_CPU is created from BVH4 and uses its data.
 	bool ownBVH4 = true;			// False when ConvertFrom receives an external bvh4.
@@ -1128,7 +1128,7 @@ public:
 	enum { INNER_BIT = 1 << 30, LEAF_BIT = 1 << 31 };
 	struct BVHNode
 	{
-		// 8-way BVH node, optimized for CPU rendering.
+		// 8-way OctTree node, optimized for CPU rendering.
 		// Based on: "Accelerated Single Ray Tracing for Wide Vector Units", Fuetterling1 et al., 2017,
 		// and the implementation by Mathijs Molenaar, https://github.com/mathijs727/pandora
 		SIMDVEC8 xmin8, xmax8;
@@ -1141,7 +1141,7 @@ public:
 #ifdef BVH8_CPU_COMPACT
 	struct BVHNodeCompact
 	{
-		// Novel 8-way BVH node, with quantized child node bounds, similar to CWBVH.
+		// Novel 8-way OctTree node, with quantized child node bounds, similar to CWBVH.
 		uint64_t cbminx8;			// 8, stores aabbMin.x for 8 children, quantized.
 		float bminx, bminy, bminz;	// 12, actually: bmin - ext.
 		float bextx, bexty, bextz;	// 12, extend of the node, scaled conversatively.
@@ -1174,9 +1174,9 @@ public:
 	int32_t Intersect( Ray& ray ) const;
 	bool IsOccluded( const Ray& ray ) const;
 	// BVH8 data
-	BVHNode* bvh8Node = 0;			// 256-byte 8-wide BVH node for efficient CPU rendering.
+	BVHNode* bvh8Node = 0;			// 256-byte 8-wide OctTree node for efficient CPU rendering.
 #ifdef BVH8_CPU_COMPACT
-	BVHNodeCompact* bvh8Small = 0;	// 128-byte 8-wide BVH node, quantized.
+	BVHNodeCompact* bvh8Small = 0;	// 128-byte 8-wide OctTree node, quantized.
 #endif
 	BVHLeaf* bvh8Leaf = 0;			// 192-byte leaf node for storing 4 tris in SoA layout.
 	MBVH<8> bvh8;					// BVH8_CPU is created from BVH8 and uses its data.
@@ -1327,7 +1327,7 @@ void BVHBase::CopyBasePropertiesFrom( const BVHBase& original )
 	this->aabbMin = original.aabbMin, this->aabbMax = original.aabbMax;
 }
 
-// BVH implementation
+// OctTree implementation
 // ----------------------------------------------------------------------------
 
 BVH::~BVH()
@@ -1382,10 +1382,10 @@ bool BVH::Load( const char* fileName, const bvhvec4slice& vertices, const uint32
 	context = tmp; // can't load context; function pointers will differ.
 	bvhNode = (BVHNode*)AlignedAlloc( allocatedNodes * sizeof( BVHNode ) );
 	primIdx = (uint32_t*)AlignedAlloc( idxCount * sizeof( uint32_t ) );
-	fragment = 0; // no need for this in a BVH that can't be rebuilt.
+	fragment = 0; // no need for this in a OctTree that can't be rebuilt.
 	s.read( (char*)bvhNode, usedNodes * sizeof( BVHNode ) );
 	s.read( (char*)primIdx, idxCount * sizeof( uint32_t ) );
-	verts = vertices; // we can't load vertices since the BVH doesn't own this data.
+	verts = vertices; // we can't load vertices since the OctTree doesn't own this data.
 	vertIdx = (uint32_t*)indices;
 	// all ok.
 	return true;
@@ -1407,8 +1407,8 @@ void BVH::BuildDefault( const bvhvec4* vertices, const uint32_t* indices, const 
 }
 void BVH::BuildDefault( const bvhvec4slice& vertices )
 {
-	// default builder: used internally when constructing a BVH layout requires
-	// a regular BVH. Currently, this is the case for all of them.
+	// default builder: used internally when constructing a OctTree layout requires
+	// a regular OctTree. Currently, this is the case for all of them.
 #if defined(BVH_USEAVX)
 	// if AVX is supported, BuildAVX is the optimal option. Tree quality is
 	// identical to the reference builder, but speed is much better.
@@ -1479,7 +1479,7 @@ void BVH::ConvertFrom( const BVH_Verbose& original, bool compact )
 float BVH::SAHCost( const uint32_t nodeIdx ) const
 {
 	// Determine the SAH cost of the tree. This provides an indication
-	// of the quality of the BVH: Lower is better.
+	// of the quality of the OctTree: Lower is better.
 	const BVHNode& n = bvhNode[nodeIdx];
 	if (n.isLeaf()) return c_int * n.SurfaceArea() * n.triCount;
 	float cost = c_trav * n.SurfaceArea() + SAHCost( n.leftFirst ) + SAHCost( n.leftFirst + 1 );
@@ -1524,13 +1524,13 @@ int32_t BVH::PrimCount( const uint32_t nodeIdx ) const
 	return n.isLeaf() ? n.triCount : (PrimCount( n.leftFirst ) + PrimCount( n.leftFirst + 1 ));
 }
 
-// Basic single-function BVH builder, using mid-point splits.
-// This builder yields a correct BVH in little time, but the quality of the
+// Basic single-function OctTree builder, using mid-point splits.
+// This builder yields a correct OctTree in little time, but the quality of the
 // structure will be low. Use this only if build time is the bottleneck in
 // your application (e.g., when you need to trace few rays).
 void BVH::BuildQuick( const bvhvec4* vertices, const uint32_t primCount )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices:
+	// build the OctTree with a continuous array of bvhvec4 vertices:
 	// in this case, the stride for the slice is 16 bytes.
 	BuildQuick( bvhvec4slice{ vertices, primCount * 3, sizeof( bvhvec4 ) } );
 }
@@ -1611,7 +1611,7 @@ void BVH::BuildQuick( const bvhvec4slice& vertices )
 	}
 	// all done.
 	aabbMin = bvhNode[0].aabbMin, aabbMax = bvhNode[0].aabbMax;
-	refittable = true; // not using spatial splits: can refit this BVH
+	refittable = true; // not using spatial splits: can refit this OctTree
 	may_have_holes = false; // the reference builder produces a continuous list of nodes
 	usedNodes = newNodePtr;
 }
@@ -1619,28 +1619,28 @@ void BVH::BuildQuick( const bvhvec4slice& vertices )
 // Basic single-function binned-SAH-builder.
 // This is the reference builder; it yields a decent tree suitable for ray tracing on the CPU.
 // This code uses no SIMD instructions. Faster code, using SSE/AVX, is available for x64 CPUs.
-// For GPU rendering: The resulting BVH should be converted to a more optimal
+// For GPU rendering: The resulting OctTree should be converted to a more optimal
 // format after construction, e.g. BVH_GPU, BVH4_GPU or BVH8_CWBVH.
 void BVH::Build( const bvhvec4* vertices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices:
+	// build the OctTree with a continuous array of bvhvec4 vertices:
 	// in this case, the stride for the slice is 16 bytes.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) } );
 }
 void BVH::Build( const bvhvec4slice& vertices )
 {
-	// build the BVH from vertices stored in a slice.
+	// build the OctTree from vertices stored in a slice.
 	PrepareBuild( vertices, 0, 0 /* empty index list; primcount is derived from slice */ );
 	Build();
 }
 void BVH::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 void BVH::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	PrepareBuild( vertices, indices, prims );
 	Build();
 }
@@ -1754,7 +1754,7 @@ void BVH::PrepareBuild( const bvhvec4slice& vertices, const uint32_t* indices, c
 	if (!indices)
 	{
 		FATAL_ERROR_IF( prims != 0, "BVH::PrepareBuild( .. ), indices == 0." );
-		// building a BVH over triangles specified as three 16-byte vertices each.
+		// building a OctTree over triangles specified as three 16-byte vertices each.
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const bvhvec4 v0 = verts[i * 3], v1 = verts[i * 3 + 1], v2 = verts[i * 3 + 2];
@@ -1768,7 +1768,7 @@ void BVH::PrepareBuild( const bvhvec4slice& vertices, const uint32_t* indices, c
 	else
 	{
 		FATAL_ERROR_IF( prims == 0, "BVH::PrepareBuild( .. ), prims == 0." );
-		// building a BVH over triangles consisting of vertices indexed by 'indices'.
+		// building a OctTree over triangles consisting of vertices indexed by 'indices'.
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const uint32_t i0 = indices[i * 3], i1 = indices[i * 3 + 1], i2 = indices[i * 3 + 2];
@@ -1783,7 +1783,7 @@ void BVH::PrepareBuild( const bvhvec4slice& vertices, const uint32_t* indices, c
 	// reset node pool
 	newNodePtr = 2;
 	bvh_over_indices = indices != nullptr;
-	// all set; actual build happens in BVH::Build.
+	// all set; actual build happens in OctTree::Build.
 }
 void BVH::Build()
 {
@@ -1874,7 +1874,7 @@ void BVH::Build()
 	}
 	// all done.
 	aabbMin = bvhNode[0].aabbMin, aabbMax = bvhNode[0].aabbMax;
-	refittable = true; // not using spatial splits: can refit this BVH
+	refittable = true; // not using spatial splits: can refit this OctTree
 	may_have_holes = false; // the reference builder produces a continuous list of nodes
 	bvh_over_aabbs = (verts == 0); // bvh over aabbs is suitable as TLAS
 	usedNodes = newNodePtr;
@@ -1884,7 +1884,7 @@ void BVH::Build()
 // Besides the regular object splits used in the reference builder, the SBVH
 // algorithm also considers spatial splits, where primitives may be cut in
 // multiple parts. This increases primitive count but may reduce overlap of
-// BVH nodes. The cost of each option is considered per split.
+// OctTree nodes. The cost of each option is considered per split.
 // For typical geometry, SBVH yields a tree that can be traversed 25% faster.
 // This comes at greatly increased construction cost, making the SBVH
 // primarily useful for static geometry.
@@ -1895,7 +1895,7 @@ void BVH::BuildHQ( const bvhvec4* vertices, const uint32_t primCount )
 
 void BVH::BuildHQ( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	BuildHQ( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
@@ -1907,7 +1907,7 @@ void BVH::BuildHQ( const bvhvec4slice& vertices )
 
 void BVH::BuildHQ( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	PrepareHQBuild( vertices, indices, prims );
 	BuildHQ();
 }
@@ -1939,7 +1939,7 @@ void BVH::PrepareHQBuild( const bvhvec4slice& vertices, const uint32_t* indices,
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareHQBuild( .. ), primCount == 0." );
 		FATAL_ERROR_IF( prims != 0, "BVH::PrepareHQBuild( .. ), indices == 0." );
-		// building a BVH over triangles specified as three 16-byte vertices each.
+		// building a OctTree over triangles specified as three 16-byte vertices each.
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const bvhvec4 v0 = verts[i * 3], v1 = verts[i * 3 + 1], v2 = verts[i * 3 + 2];
@@ -1954,7 +1954,7 @@ void BVH::PrepareHQBuild( const bvhvec4slice& vertices, const uint32_t* indices,
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareHQBuild( .. ), empty vertex slice." );
 		FATAL_ERROR_IF( prims == 0, "BVH::PrepareHQBuild( .. ), prims == 0." );
-		// building a BVH over triangles consisting of vertices indexed by 'indices'.
+		// building a OctTree over triangles consisting of vertices indexed by 'indices'.
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const uint32_t i0 = indices[i * 3], i1 = indices[i * 3 + 1], i2 = indices[i * 3 + 2];
@@ -1969,7 +1969,7 @@ void BVH::PrepareHQBuild( const bvhvec4slice& vertices, const uint32_t* indices,
 	// clear remainder of index array
 	memset( primIdx + triCount, 0, slack * 4 );
 	bvh_over_indices = indices != nullptr;
-	// all set; actual build happens in BVH::Build.
+	// all set; actual build happens in OctTree::Build.
 }
 void BVH::BuildHQ()
 {
@@ -2468,7 +2468,7 @@ int32_t BVH::IntersectTLAS( Ray& ray ) const
 				tmp.hit = ray.hit;
 				tmp.rD = tinybvh_safercp( tmp.D );
 				// 2. Traverse BLAS with the transformed ray
-				// Note: Valid BVH layout options for BLASses are the regular BVH layout,
+				// Note: Valid OctTree layout options for BLASses are the regular OctTree layout,
 				// the AVX-optimized BVH_SOA layout and the wide BVH4_CPU layout. If all
 				// BLASses are of the same layout this reduces to nearly zero cost for
 				// a small set of predictable branches.
@@ -2476,7 +2476,7 @@ int32_t BVH::IntersectTLAS( Ray& ray ) const
 					blas->layout == LAYOUT_BVH_SOA || blas->layout == LAYOUT_BVH8_AVX2 );
 				if (blas->layout == LAYOUT_BVH)
 				{
-					// regular (triangle) BVH traversal
+					// regular (triangle) OctTree traversal
 					cost += ((BVH*)blas)->Intersect( tmp );
 				}
 				else
@@ -2578,7 +2578,7 @@ bool BVH::IsOccludedTLAS( const Ray& ray ) const
 					blas->layout == LAYOUT_BVH_SOA || blas->layout == LAYOUT_BVH8_AVX2 );
 				if (blas->layout == LAYOUT_BVH)
 				{
-					// regular (triangle) BVH traversal
+					// regular (triangle) OctTree traversal
 					if (((BVH*)blas)->IsOccluded( tmp )) return true;
 				}
 				else
@@ -2610,7 +2610,7 @@ bool BVH::IsOccludedTLAS( const Ray& ray ) const
 	return false;
 }
 
-// Intersect a WALD_32BYTE BVH with a ray packet.
+// Intersect a WALD_32BYTE OctTree with a ray packet.
 // The 256 rays travel together to better utilize the caches and to amortize the cost
 // of memory transfers over the rays in the bundle.
 // Note that this basic implementation assumes a specific layout of the rays. Provided
@@ -2820,7 +2820,7 @@ int32_t BVH::LeafCount() const
 	return retVal;
 }
 
-// Compact: Reduce the size of a BVH by removing any unused nodes.
+// Compact: Reduce the size of a OctTree by removing any unused nodes.
 // This is useful after an SBVH build or multi-threaded build, but also after
 // calling MergeLeafs. Some operations, such as Optimize, *require* a
 // compacted tree to work correctly.
@@ -2928,7 +2928,7 @@ int32_t BVH_Verbose::NodeCount() const
 float BVH_Verbose::SAHCost( const uint32_t nodeIdx ) const
 {
 	// Determine the SAH cost of the tree. This provides an indication
-	// of the quality of the BVH: Lower is better.
+	// of the quality of the OctTree: Lower is better.
 	const BVHNode& n = bvhNode[nodeIdx];
 	const float SAn = SA( n.aabbMin, n.aabbMax );
 	if (n.isLeaf()) return c_int * SAn * n.triCount;
@@ -3120,9 +3120,9 @@ void BVH_Verbose::Optimize( const uint32_t iterations, const bool extreme )
 	AlignedFree( sortList );
 }
 
-// Single-primitive leafs: Prepare the BVH for optimization. While it is not strictly
+// Single-primitive leafs: Prepare the OctTree for optimization. While it is not strictly
 // necessary to have a single primitive per leaf, it will yield a slightly better
-// optimized BVH. The leafs of the optimized BVH should be collapsed ('MergeLeafs')
+// optimized OctTree. The leafs of the optimized OctTree should be collapsed ('MergeLeafs')
 // to obtain the final tree.
 void BVH_Verbose::SplitLeafs( const uint32_t maxPrims )
 {
@@ -3160,7 +3160,7 @@ void BVH_Verbose::SplitLeafs( const uint32_t maxPrims )
 	}
 }
 
-// MergeLeafs: After optimizing a BVH, single-primitive leafs should be merged whenever
+// MergeLeafs: After optimizing a OctTree, single-primitive leafs should be merged whenever
 // SAH indicates this is an improvement.
 void BVH_Verbose::MergeLeafs()
 {
@@ -3236,13 +3236,13 @@ void BVH_GPU::Build( const bvhvec4slice& vertices )
 
 void BVH_GPU::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH_GPU::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh.context = context;
 	bvh.BuildDefault( vertices, indices, prims );
 	ConvertFrom( bvh, false );
@@ -3404,13 +3404,13 @@ void BVH_SoA::Build( const bvhvec4slice& vertices )
 
 void BVH_SoA::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH_SoA::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh.context = context;
 	bvh.BuildDefault( vertices, indices, prims );
 	ConvertFrom( bvh, false );
@@ -3502,7 +3502,7 @@ void BVH_SoA::ConvertFrom( const BVH& original, bool compact )
 		{
 			const BVH::BVHNode& left = bvh.bvhNode[node.leftFirst];
 			const BVH::BVHNode& right = bvh.bvhNode[node.leftFirst + 1];
-			// This BVH layout requires BVH_USEAVX/BVH_USENEON for traversal, but at least we
+			// This OctTree layout requires BVH_USEAVX/BVH_USENEON for traversal, but at least we
 			// can convert to it without SSE/AVX/NEON support.
 			bvhNode[idx].xxxx = SIMD_SETRVEC( left.aabbMin.x, left.aabbMax.x, right.aabbMin.x, right.aabbMax.x );
 			bvhNode[idx].yyyy = SIMD_SETRVEC( left.aabbMin.y, left.aabbMax.y, right.aabbMin.y, right.aabbMax.y );
@@ -3541,13 +3541,13 @@ template<int M> void MBVH<M>::Build( const bvhvec4slice& vertices )
 
 template<int M> void MBVH<M>::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 template<int M> void MBVH<M>::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh.context = context;
 	bvh.BuildDefault( vertices, indices, prims );
 	ConvertFrom( bvh, true );
@@ -3639,7 +3639,7 @@ template<int M> void MBVH<M>::Refit( const uint32_t nodeIdx )
 template<int M> float MBVH<M>::SAHCost( const uint32_t nodeIdx ) const
 {
 	// Determine the SAH cost of the tree. This provides an indication
-	// of the quality of the BVH: Lower is better.
+	// of the quality of the OctTree: Lower is better.
 	const MBVHNode& n = mbvhNode[nodeIdx];
 	const float sa = BVH::SA( n.aabbMin, n.aabbMax );
 	if (n.isLeaf()) return c_int * sa * n.triCount;
@@ -3747,13 +3747,13 @@ void BVH4_CPU::Build( const bvhvec4slice& vertices )
 
 void BVH4_CPU::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH4_CPU::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh4.context = context;
 	bvh4.Build( vertices, indices, prims );
 	ConvertFrom( bvh4, true );
@@ -3836,7 +3836,7 @@ void BVH4_CPU::ConvertFrom( const MBVH<4>& original, bool compact )
 	// get a copy of the original bvh4
 	if (&original != &bvh4) ownBVH4 = false; // bvh isn't ours; don't delete in destructor.
 	bvh4 = original;
-	// Convert a 4-wide BVH to a format suitable for CPU traversal.
+	// Convert a 4-wide OctTree to a format suitable for CPU traversal.
 	// See Faster Incoherent Ray Traversal Using 8-Wide AVX InstructionsLayout,
 	// Atilla T. Áfra, 2013.
 	uint32_t spaceNeeded = compact ? bvh4.usedNodes : bvh4.allocatedNodes;
@@ -3946,13 +3946,13 @@ void BVH4_GPU::Build( const bvhvec4slice& vertices )
 
 void BVH4_GPU::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH4_GPU::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh4.context = context;
 	bvh4.Build( vertices, indices, prims );
 	ConvertFrom( bvh4, true );
@@ -3993,7 +3993,7 @@ void BVH4_GPU::ConvertFrom( const MBVH<4>& original, bool compact )
 	// get a copy of the original bvh4
 	if (&original != &bvh4) ownBVH4 = false; // bvh isn't ours; don't delete in destructor.
 	bvh4 = original;
-	// Convert a 4-wide BVH to a format suitable for GPU traversal. Layout:
+	// Convert a 4-wide OctTree to a format suitable for GPU traversal. Layout:
 	// offs 0:   aabbMin (12 bytes), 4x quantized child xmin (4 bytes)
 	// offs 16:  aabbMax (12 bytes), 4x quantized child xmax (4 bytes)
 	// offs 32:  4x child ymin, then ymax, zmax, zmax (total 16 bytes)
@@ -4255,13 +4255,13 @@ void BVH8_CPU::Build( const bvhvec4slice& vertices )
 
 void BVH8_CPU::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH8_CPU::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh8.bvh.context = bvh8.context = context;
 	bvh8.bvh.BuildDefault( vertices, indices, prims );
 	bvh8.bvh.CombineLeafs( 4 );
@@ -4516,13 +4516,13 @@ void BVH8_CWBVH::Build( const bvhvec4slice& vertices )
 
 void BVH8_CWBVH::Build( const bvhvec4* vertices, const uint32_t* indices, const uint32_t prims )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices, indexed by 'indices'.
+	// build the OctTree with a continuous array of bvhvec4 vertices, indexed by 'indices'.
 	Build( bvhvec4slice{ vertices, prims * 3, sizeof( bvhvec4 ) }, indices, prims );
 }
 
 void BVH8_CWBVH::Build( const bvhvec4slice& vertices, const uint32_t* indices, uint32_t prims )
 {
-	// build the BVH from vertices stored in a slice, indexed by 'indices'.
+	// build the OctTree from vertices stored in a slice, indexed by 'indices'.
 	bvh8.bvh.context = bvh8.context = context;
 	bvh8.bvh.BuildDefault( vertices, indices, prims );
 	bvh8.bvh.SplitLeafs( 3 );
@@ -4749,7 +4749,7 @@ inline float halfArea( const __m256& a /* a contains aabb itself, with min.xyz n
 #endif
 void BVH::BuildAVX( const bvhvec4* vertices, const uint32_t primCount )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices:
+	// build the OctTree with a continuous array of bvhvec4 vertices:
 	// in this case, the stride for the slice is 16 bytes.
 	BuildAVX( bvhvec4slice{ vertices, primCount * 3, sizeof( bvhvec4 ) } );
 }
@@ -4760,7 +4760,7 @@ void BVH::BuildAVX( const bvhvec4slice& vertices )
 }
 void BVH::BuildAVX( const bvhvec4* vertices, const uint32_t* indices, const uint32_t primCount )
 {
-	// build the BVH with an indexed array of bvhvec4 vertices.
+	// build the OctTree with an indexed array of bvhvec4 vertices.
 	BuildAVX( bvhvec4slice{ vertices, primCount * 3, sizeof( bvhvec4 ) }, indices, primCount );
 }
 void BVH::BuildAVX( const bvhvec4slice& vertices, const uint32_t* indices, const uint32_t primCount )
@@ -4806,7 +4806,7 @@ void BVH::PrepareAVXBuild( const bvhvec4slice& vertices, const uint32_t* indices
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareAVXBuild( .. ), empty vertex slice." );
 		FATAL_ERROR_IF( prims == 0, "BVH::PrepareAVXBuild( .. ), prims == 0." );
-		// build the BVH over indexed triangles
+		// build the OctTree over indexed triangles
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const uint32_t i0 = indices[i * 3], i1 = indices[i * 3 + 1], i2 = indices[i * 3 + 2];
@@ -4821,7 +4821,7 @@ void BVH::PrepareAVXBuild( const bvhvec4slice& vertices, const uint32_t* indices
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareAVXBuild( .. ), empty vertex slice." );
 		FATAL_ERROR_IF( prims != 0, "BVH::PrepareAVXBuild( .. ), indices == 0." );
-		// build the BVH over a list of vertices: three per triangle
+		// build the OctTree over a list of vertices: three per triangle
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const __m128 v0 = verts4[(i * 3) * stride4], v1 = verts4[(i * 3 + 1) * stride4], v2 = verts4[(i * 3 + 2) * stride4];
@@ -4951,7 +4951,7 @@ void BVH::BuildAVX()
 	}
 	// all done.
 	aabbMin = bvhNode[0].aabbMin, aabbMax = bvhNode[0].aabbMax;
-	refittable = true; // not using spatial splits: can refit this BVH
+	refittable = true; // not using spatial splits: can refit this OctTree
 	may_have_holes = false; // the AVX builder produces a continuous list of nodes
 	usedNodes = newNodePtr;
 }
@@ -4961,7 +4961,7 @@ void BVH::BuildAVX()
 #pragma GCC diagnostic pop // restore -Wmaybe-uninitialized
 #endif
 
-// Intersect a BVH with a ray packet, basic SSE-optimized version.
+// Intersect a OctTree with a ray packet, basic SSE-optimized version.
 // Note: This yields +10% on 10th gen Intel CPUs, but a small loss on
 // more recent hardware. This function needs a full conversion to work
 // with groups of 8 rays at a time - TODO.
@@ -5164,7 +5164,7 @@ void BVH::Intersect256RaysSSE( Ray* packet ) const
 	}
 }
 
-// Traverse the 'structure of arrays' BVH layout.
+// Traverse the 'structure of arrays' OctTree layout.
 int32_t BVH_SoA::Intersect( Ray& ray ) const
 {
 	BVHNode* node = &bvhNode[0], * stack[64];
@@ -5243,7 +5243,7 @@ int32_t BVH_SoA::Intersect( Ray& ray ) const
 	return (int32_t)cost;
 }
 
-// Find occlusions in the second alternative BVH layout (ALT_SOA).
+// Find occlusions in the second alternative OctTree layout (ALT_SOA).
 bool BVH_SoA::IsOccluded( const Ray& ray ) const
 {
 	BVHNode* node = &bvhNode[0], * stack[64];
@@ -5320,7 +5320,7 @@ bool BVH_SoA::IsOccluded( const Ray& ray ) const
 }
 
 // Intersect_CWBVH:
-// Intersect a compressed 8-wide BVH with a ray. For debugging only, not efficient.
+// Intersect a compressed 8-wide OctTree with a ray. For debugging only, not efficient.
 // Not technically limited to BVH_USEAVX, but __lzcnt and __popcnt will require
 // exotic compiler flags (in combination with __builtin_ia32_lzcnt_u32), so... Since
 // this is just here to test data before it goes to the GPU: MSVC-only for now.
@@ -5496,7 +5496,7 @@ int32_t BVH8_CWBVH::Intersect( Ray& ray ) const
 	return 0;
 }
 
-// Traverse a 4-way BVH stored in 'Atilla Áfra' layout.
+// Traverse a 4-way OctTree stored in 'Atilla Áfra' layout.
 inline void IntersectCompactTri( Ray& r, __m128& t4, const float* T )
 {
 	const float transS = T[8] * r.O.x + T[9] * r.O.y + T[10] * r.O.z + T[11];
@@ -5662,7 +5662,7 @@ int32_t BVH4_CPU::Intersect( Ray& ray ) const
 	return (int32_t)cost;
 }
 
-// Find occlusions in a 4-way BVH stored in 'Atilla Áfra' layout.
+// Find occlusions in a 4-way OctTree stored in 'Atilla Áfra' layout.
 inline bool OccludedCompactTri( const Ray& r, const float* T )
 {
 	const float transS = T[8] * r.O.x + T[9] * r.O.y + T[10] * r.O.z + T[11];
@@ -6177,7 +6177,7 @@ inline float halfArea( const float32x4x2_t& a /* a contains aabb itself, with mi
 
 void BVH::BuildNEON( const bvhvec4* vertices, const uint32_t primCount )
 {
-	// build the BVH with a continuous array of bvhvec4 vertices:
+	// build the OctTree with a continuous array of bvhvec4 vertices:
 	// in this case, the stride for the slice is 16 bytes.
 	BuildNEON( bvhvec4slice{ vertices, primCount * 3, sizeof( bvhvec4 ) } );
 }
@@ -6188,7 +6188,7 @@ void BVH::BuildNEON( const bvhvec4slice& vertices )
 }
 void BVH::BuildNEON( const bvhvec4* vertices, const uint32_t* indices, const uint32_t primCount )
 {
-	// build the BVH with an indexed array of bvhvec4 vertices.
+	// build the OctTree with an indexed array of bvhvec4 vertices.
 	BuildNEON( bvhvec4slice{ vertices, primCount * 3, sizeof( bvhvec4 ) }, indices, primCount );
 }
 void BVH::BuildNEON( const bvhvec4slice& vertices, const uint32_t* indices, const uint32_t primCount )
@@ -6233,7 +6233,7 @@ void BVH::PrepareNEONBuild( const bvhvec4slice& vertices, const uint32_t* indice
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareAVXBuild( .. ), empty vertex slice." );
 		FATAL_ERROR_IF( prims == 0, "BVH::PrepareAVXBuild( .. ), prims == 0." );
-		// build the BVH over indexed triangles
+		// build the OctTree over indexed triangles
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const uint32_t i0 = indices[i * 3], i1 = indices[i * 3 + 1], i2 = indices[i * 3 + 2];
@@ -6248,7 +6248,7 @@ void BVH::PrepareNEONBuild( const bvhvec4slice& vertices, const uint32_t* indice
 	{
 		FATAL_ERROR_IF( vertices.count == 0, "BVH::PrepareAVXBuild( .. ), empty vertex slice." );
 		FATAL_ERROR_IF( prims != 0, "BVH::PrepareAVXBuild( .. ), indices == 0." );
-		// build the BVH over a list of vertices: three per triangle
+		// build the OctTree over a list of vertices: three per triangle
 		for (uint32_t i = 0; i < triCount; i++)
 		{
 			const float32x4_t v0 = verts4[i * 3], v1 = verts4[i * 3 + 1], v2 = verts4[i * 3 + 2];
@@ -6407,12 +6407,12 @@ void BVH::BuildNEON()
 	}
 	// all done.
 	aabbMin = bvhNode[0].aabbMin, aabbMax = bvhNode[0].aabbMax;
-	refittable = true; // not using spatial splits: can refit this BVH
+	refittable = true; // not using spatial splits: can refit this OctTree
 	may_have_holes = false; // the AVX builder produces a continuous list of nodes
 	usedNodes = newNodePtr;
 }
 
-// Traverse the second alternative BVH layout (ALT_SOA).
+// Traverse the second alternative OctTree layout (ALT_SOA).
 int32_t BVH_SoA::Intersect( Ray& ray ) const
 {
 	BVHNode* node = &bvhNode[0], * stack[64];
@@ -6573,7 +6573,7 @@ bool BVH_SoA::IsOccluded( const Ray& ray ) const
 	return false;
 }
 
-// Traverse a 4-way BVH stored in 'Atilla Áfra' layout.
+// Traverse a 4-way OctTree stored in 'Atilla Áfra' layout.
 inline void IntersectCompactTri( Ray& r, float32x4_t& t4, const float* T )
 {
 	const float transS = T[8] * r.O.x + T[9] * r.O.y + T[10] * r.O.z + T[11];
@@ -6749,7 +6749,7 @@ int32_t BVH4_CPU::Intersect( Ray& ray ) const
 	return (int32_t)cost;
 }
 
-// Find occlusions in a 4-way BVH stored in 'Atilla Áfra' layout.
+// Find occlusions in a 4-way OctTree stored in 'Atilla Áfra' layout.
 inline bool OccludedCompactTri( const Ray& r, const float* T )
 {
 	const float transS = T[8] * r.O.x + T[9] * r.O.y + T[10] * r.O.z + T[11];
@@ -7150,7 +7150,7 @@ void BVH_Double::Build()
 	}
 	// all done.
 	aabbMin = bvhNode[0].aabbMin, aabbMax = bvhNode[0].aabbMax;
-	refittable = true; // not using spatial splits: can refit this BVH
+	refittable = true; // not using spatial splits: can refit this OctTree
 	may_have_holes = false; // the reference builder produces a continuous list of nodes
 	bvh_over_aabbs = (verts == 0); // bvh over aabbs is suitable as TLAS
 	usedNodes = newNodePtr;
@@ -7171,7 +7171,7 @@ double BVH_Double::SAHCost( const uint64_t nodeIdx ) const
 	return nodeIdx == 0 ? (cost / n.SurfaceArea()) : cost;
 }
 
-// Traverse the default BVH layout, double-precision.
+// Traverse the default OctTree layout, double-precision.
 int32_t BVH_Double::Intersect( RayEx& ray ) const
 {
 	if (instList) return IntersectTLAS( ray );
@@ -7881,7 +7881,7 @@ uint32_t BVH_Verbose::FindBestNewPosition( const uint32_t Lid ) const
 	float Cbest = BVH_FAR;
 	int tasks = 1 /* doesn't exceed 70 for Crytek Sponza */, Xbest = 0;
 	const BVHNode& L = bvhNode[Lid];
-	// reinsert L into BVH
+	// reinsert L into OctTree
 	task[0].node = 0, task[0].ci = 0;
 	while (tasks > 0)
 	{

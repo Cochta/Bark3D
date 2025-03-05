@@ -43,7 +43,7 @@ public:
 /**
  * @brief Class representing a quadtree data structure for collision detection.
  */
-class BVH {
+class OctTree {
 public:
 	CustomlyAllocatedVector<BVHNode> Nodes; /**< Vector of quadtree nodes. */
 
@@ -54,10 +54,10 @@ private:
 	Allocator& _alloc; /**< The allocator for memory allocation.*/
 public:
 	/**
-	 * @brief Constructor for BVH, allocating memory using a specified allocator.
+	 * @brief Constructor for OctTree, allocating memory using a specified allocator.
 	 * @param alloc The allocator for memory allocation.
 	 */
-	BVH(Allocator& alloc) noexcept;
+	OctTree(Allocator& alloc) noexcept;
 
 	/**
 	 * @brief Set up the root of the quadtree with the specified bounds.

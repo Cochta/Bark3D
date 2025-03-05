@@ -33,10 +33,12 @@ void World::Update(const float deltaTime) noexcept
 	UpdateBodies(deltaTime);
 
 
-	//UpdateCollisions();
+	//UpdateGlobalCollisions();
 	SetUpQuadTree();
 
-	UpdateQuadTreeCollisions(BVH.Nodes[0]);
+	UpdateQuadTreeCollisions(OctTree.Nodes[0]);
+
+
 }
 
 [[nodiscard]] BodyRef World::CreateBody() noexcept
@@ -158,6 +160,12 @@ void World::SetUpQuadTree() noexcept {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
+
+#ifdef TRACY_ENABLE
+	ZoneNamedN(SetRoodNodeBoundary, "SetRootNodeBounds", true);
+	ZoneValue(_colliders.size());
+#endif
+
 	XMVECTOR maxBounds = XMVectorSet(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), 0);
 	XMVECTOR minBounds = XMVectorSet(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), 0);
 
@@ -178,14 +186,18 @@ void World::SetUpQuadTree() noexcept {
 		maxBounds = XMVectorSetZ(maxBounds, std::max(XMVectorGetZ(maxBounds), XMVectorGetZ(bounds.MaxBound())));
 	}
 
-	BVH.SetUpRoot(CuboidF(minBounds, maxBounds));
+	OctTree.SetUpRoot(CuboidF(minBounds, maxBounds));
+
 #ifdef TRACY_ENABLE
-	ZoneNamedN(Insert, "Insert in QuadTree", true);
+	ZoneNamedN(Insert, "Insert in OctTree", true);
 #endif
 	for (std::size_t i = 0; i < _colliders.size(); ++i) {
-		if (_colliders[i].IsAttached) {
-			BVH.Insert(BVH.Nodes[0], { _colliders[i].GetBounds(), { i, ColliderGenIndices[i] } });
+		if (!_colliders[i].IsAttached) {
+			continue;
 		}
+
+		OctTree.Insert(OctTree.Nodes[0], { _colliders[i].GetBounds(), { i, ColliderGenIndices[i] } });
+
 	}
 }
 
@@ -203,10 +215,18 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 		for (std::size_t i = 0; i < node.ColliderRefAabbs.size() - 1; ++i)
 		{
 			auto& col1 = GetCollider(node.ColliderRefAabbs[i].ColRef);
+			auto& body1 = GetBody(col1.BodyRef);
 
 			for (std::size_t j = i + 1; j < node.ColliderRefAabbs.size(); ++j)
 			{
 				auto& col2 = GetCollider(node.ColliderRefAabbs[j].ColRef);
+				auto& body2 = GetBody(col2.BodyRef);
+
+				//if (body1.ParticleData && body2.ParticleData)
+				//{
+				//	ProcessFluidInteraction(body1, body2, 10.0f);
+				//	continue;
+				//}
 
 				if (!col2.IsTrigger && !col1.IsTrigger) // Physical collision
 				{
@@ -235,6 +255,8 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 				{
 					continue;
 				}
+
+
 				// Trigger collision
 				const ColliderRefPair& colPair = { node.ColliderRefAabbs[i].ColRef, node.ColliderRefAabbs[j].ColRef };
 
@@ -304,7 +326,7 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 	return false;
 }
 
-void World::UpdateCollisions() noexcept
+void World::UpdateGlobalCollisions() noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -313,7 +335,8 @@ void World::UpdateCollisions() noexcept
 	{
 		ColliderRef colRef1{ i, ColliderGenIndices[i] };
 		auto& col1 = GetCollider(colRef1);
-		col1.BodyPosition = GetBody({ i, ColliderGenIndices[i] }).Position;
+		auto& body1 = GetBody(col1.BodyRef);
+		col1.BodyPosition = body1.Position;
 
 		if (!col1.IsAttached)
 		{
@@ -324,11 +347,18 @@ void World::UpdateCollisions() noexcept
 		{
 			ColliderRef colRef2{ j, ColliderGenIndices[j] };
 			auto& col2 = GetCollider(colRef2);
+			auto& body2 = GetBody(col2.BodyRef);
 
 			if (!col2.IsAttached)
 			{
 				continue;
 			}
+
+			//if (body1.ParticleData && body2.ParticleData)
+			//{
+			//	ProcessFluidInteraction(body1, body2, 10.0f);
+			//	continue;
+			//}
 
 			if (!col2.IsTrigger && !col1.IsTrigger) // physical collision
 			{
@@ -378,4 +408,45 @@ void World::UpdateCollisions() noexcept
 			}
 		}
 	}
+}
+
+void World::ProcessFluidInteraction(Body& p1, Body& p2, float smoothingLength) noexcept
+{
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
+	float dist = XMVectorGetX(XMVector3Length(XMVectorSubtract(p2.Position, p1.Position)));
+	if (dist > smoothingLength) return;
+
+	XMVECTOR direction = XMVector3Normalize(XMVectorSubtract(p2.Position, p1.Position));
+
+	// Compute density
+	float density1 = p1.ParticleData->Density + p2.Mass * Poly6Kernel(dist, smoothingLength);
+	float density2 = p2.ParticleData->Density + p1.Mass * Poly6Kernel(dist, smoothingLength);
+
+	p1.ParticleData->Density = density1;
+	p2.ParticleData->Density = density2;
+
+	// Compute pressure
+	p1.ParticleData->Pressure = ComputePressure(density1);
+	p2.ParticleData->Pressure = ComputePressure(density2);
+
+	// Compute forces
+	float pressureTerm = (p1.ParticleData->Pressure + p2.ParticleData->Pressure) / (2 * density1);
+	XMVECTOR pressureForce = XMVectorScale(direction, pressureTerm * SpikyGradient(dist, smoothingLength) * 1.5f);
+
+	// Apply viscosity force with a lower scaling factor
+	XMVECTOR viscosityForce = XMVectorScale(p2.Velocity - p1.Velocity, ViscosityLaplacian(dist, smoothingLength) * 0.5f);
+
+	p1.ApplyForce(pressureForce);
+	p2.ApplyForce(XMVectorNegate(pressureForce)); // Equal and opposite reaction
+
+	p1.ApplyForce(viscosityForce);
+	p2.ApplyForce(XMVectorNegate(viscosityForce));
+
+	XMVECTOR repulsionForce = XMVectorScale(XMVector3Normalize(p1.Position - p2.Position), (10 - dist) * 50);
+	p1.ApplyForce(repulsionForce);
+	p2.ApplyForce(repulsionForce);
+
+
 }

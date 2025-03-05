@@ -1,31 +1,45 @@
 #include "QuadTree.h"
 
+#ifdef TRACY_ENABLE
+#include <Tracy.hpp>
+#include <TracyC.h>
+#endif 
+
 BVHNode::BVHNode(Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{alloc})
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	ColliderRefAabbs.reserve(16);
 }
 
 BVHNode::BVHNode(const CuboidF& bounds, Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{ alloc }), Bounds(bounds)
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	ColliderRefAabbs.reserve(16);
 }
 
-BVH::BVH(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<BVHNode>{alloc} }
+OctTree::OctTree(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<BVHNode>{alloc} }
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	std::size_t result = 0;
 	for (size_t i = 0; i <= MAX_DEPTH; i++)
 	{
 		result += Pow(8, i);
 	}
-	//Nodes.resize(result, BVHNode(_alloc));
-	Nodes.reserve(result);
-	for (size_t i = 0; i < result; ++i) {
-		Nodes.emplace_back(_alloc);
-	}
+	Nodes.resize(result, BVHNode(_alloc));
+
 }
 
-void BVH::SubdivideNode(BVHNode& node) noexcept
+void OctTree::SubdivideNode(BVHNode& node) noexcept
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	// Compute half the size of the bounding box
 	const XMVECTOR halfSize = XMVectorScale(XMVectorSubtract(node.Bounds.MaxBound(), node.Bounds.MinBound()), 0.5f);
 	const XMVECTOR minBound = node.Bounds.MinBound();
@@ -56,8 +70,11 @@ void BVH::SubdivideNode(BVHNode& node) noexcept
 	_nodeIndex += 8;
 }
 
-void BVH::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
+void OctTree::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	if (node.Children[0] != nullptr)
 	{
 		for (const auto& child : node.Children)
@@ -92,7 +109,7 @@ void BVH::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noexcept
 	//printf("%i\n", node.ColliderRefAabbs.size());
 }
 
-void BVH::SetUpRoot(const CuboidF& bounds) noexcept
+void OctTree::SetUpRoot(const CuboidF& bounds) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;

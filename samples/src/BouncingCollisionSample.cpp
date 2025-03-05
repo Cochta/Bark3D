@@ -144,7 +144,7 @@ void BouncingCollisionSample::SampleUpdate() noexcept {
   }
 
   _quadTreeGraphicsData.clear();
-  DrawQuadtree(_world.BVH.Nodes[0]);
+  DrawQuadtree(_world.OctTree.Nodes[0]);
   AllGraphicsData.insert(AllGraphicsData.end(), _quadTreeGraphicsData.begin(),
                          _quadTreeGraphicsData.end());
 }

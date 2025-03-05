@@ -2,7 +2,7 @@
 
 void Sample::SetUp() noexcept
 {
-	_timer.SetUp();
+	//_timer.SetUp();
 	_world.SetUp();
 	SampleSetUp();
 }
@@ -10,10 +10,10 @@ void Sample::SetUp() noexcept
 void Sample::Update() noexcept
 {
 	SampleUpdate();
-	_timer.Tick();
+	//_timer.Tick();
 	if (_isActive)
 	{
-		_world.Update(_timer.DeltaTime);
+		_world.Update(1.f / 60.f);
 	}
 
 	_mouseLeftReleased = false;
