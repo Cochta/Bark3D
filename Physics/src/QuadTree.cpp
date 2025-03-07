@@ -10,7 +10,7 @@ BVHNode::BVHNode(Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
-	ColliderRefAabbs.reserve(16);
+	ColliderRefAabbs.reserve(MAX_COL_NBR);
 }
 
 BVHNode::BVHNode(const CuboidF& bounds, Allocator& alloc) noexcept : ColliderRefAabbs(StandardAllocator<ColliderRefPair>{ alloc }), Bounds(bounds)
@@ -18,7 +18,7 @@ BVHNode::BVHNode(const CuboidF& bounds, Allocator& alloc) noexcept : ColliderRef
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
-	ColliderRefAabbs.reserve(16);
+	ColliderRefAabbs.reserve(MAX_COL_NBR);
 }
 
 OctTree::OctTree(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllocator<BVHNode>{alloc} }
@@ -29,7 +29,7 @@ OctTree::OctTree(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllo
 	std::size_t result = 0;
 	for (size_t i = 0; i <= MAX_DEPTH; i++)
 	{
-		result += Pow(8, i);
+		result += Pow(SUBDIVIDE_NBR, i);
 	}
 	Nodes.resize(result, BVHNode(_alloc));
 
@@ -45,7 +45,7 @@ void OctTree::SubdivideNode(BVHNode& node) noexcept
 	const XMVECTOR minBound = node.Bounds.MinBound();
 
 	// Precompute offsets for all 8 child nodes
-	const XMVECTOR offsets[8] = {
+	const XMVECTOR offsets[SUBDIVIDE_NBR] = {
 		XMVectorSet(0, 0, 0, 0),                         // Bottom-left-front
 		XMVectorSet(0, 0, XMVectorGetZ(halfSize), 0),    // Bottom-left-back
 		XMVectorSet(0, XMVectorGetY(halfSize), 0, 0),    // Bottom-right-front
@@ -57,7 +57,7 @@ void OctTree::SubdivideNode(BVHNode& node) noexcept
 	};
 
 	// Create 8 child nodes
-	for (int i = 0; i < 8; ++i)
+	for (int i = 0; i < SUBDIVIDE_NBR; ++i)
 	{
 		node.Children[i] = &Nodes[_nodeIndex + i];
 		const XMVECTOR childMin = XMVectorAdd(minBound, offsets[i]);
@@ -105,8 +105,8 @@ void OctTree::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noex
 	else
 	{
 		node.ColliderRefAabbs.push_back(colliderRefAabb);
+		//printf("node depth: %i, nb col: %i", node.Depth, node.ColliderRefAabbs.size());
 	}
-	//printf("%i\n", node.ColliderRefAabbs.size());
 }
 
 void OctTree::SetUpRoot(const CuboidF& bounds) noexcept

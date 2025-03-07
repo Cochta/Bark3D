@@ -76,33 +76,3 @@ template<typename T>
 
 	return result;
 }
-
-
-template<typename T>
-[[nodiscard]] T Poly6Kernel(T r, T h)
-{
-	if (r > h) return 0.0f;
-	T factor = (315.0f / (64.0f * PI * pow(h, 9)));
-	return factor * pow((h * h - r * r), 3);
-}
-template<typename T>
-[[nodiscard]] T SpikyGradient(T r, T h)
-{
-	if (r > h || r == 0) return 0.0f;
-	float factor = (-45.0f / (PI * pow(h, 6)));
-	return factor * pow((h - r), 2);
-}
-template<typename T>
-[[nodiscard]] T ViscosityLaplacian(T r, T h)
-{
-	if (r > h) return 0.0f;
-	T factor = (45.0f / (PI * pow(h, 6)));
-	return factor * (h - r);
-}
-template<typename T>
-[[nodiscard]] T ComputePressure(T density)
-{
-	const T restDensity = 1000.0f; // Water density
-	const T stiffness = 2000.0f; // Tuning parameter
-	return stiffness * (density - restDensity);
-}

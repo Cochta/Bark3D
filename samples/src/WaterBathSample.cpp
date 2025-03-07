@@ -144,9 +144,8 @@ void WaterBathSample::SampleUpdate() noexcept {
 
 		switch (shape.index()) {
 		case static_cast<int>(ShapeType::Sphere):
-			//fix to reduce quadtree size
 
-			if (XMVectorGetY(col.BodyPosition) <= -500)
+			if (XMVectorGetY(col.BodyPosition) <= -500)//fix to reduce quadtree size
 			{
 				_world.GetBody(col.BodyRef).Position = XMVectorZero();
 			}
@@ -194,7 +193,6 @@ void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
 	sphereBody.ParticleData = ParticleData{};
 	if (sphereBody.ParticleData.has_value())
 	{
-		
 		gd.Color = { 170,213,219 };
 	}
 	else
