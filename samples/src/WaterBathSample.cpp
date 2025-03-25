@@ -21,11 +21,7 @@ void WaterBathSample::OnCollisionExit(ColliderRef col1,
 void WaterBathSample::SampleSetUp() noexcept {
 	_world.SetContactListener(this);
 
-	for (size_t i = 0; i < NBPARTICLES; i++) {
-		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
-	}
+
 
 	// Create static cuboid for ground
 	const auto groundRef = _world.CreateBody();
@@ -128,7 +124,52 @@ void WaterBathSample::SampleSetUp() noexcept {
 
 	AllGraphicsData.emplace_back(gd);
 
+	// Create static cuboid for ceiling
+	const auto roofRef = _world.CreateBody();
+	_bodyRefs.push_back(roofRef);
+	auto& roofBody = _world.GetBody(roofRef);
+	roofBody.Type = BodyType::STATIC;
+	roofBody.Mass = 1;
 
+	roofBody.Position = { 0,WALLDIST + WALLSIZE ,0 };
+
+	const auto roofColRef = _world.CreateCollider(roofRef);
+	_colRefs.push_back(roofColRef);
+	auto& roofCol = _world.GetCollider(roofColRef);
+	roofCol.Shape = CuboidF({ -WALLDIST, -WALLSIZE, -WALLDIST },
+		{ WALLDIST, WALLSIZE, WALLDIST });
+	roofCol.BodyPosition = roofBody.Position;
+	roofCol.Restitution = 0.f;
+
+	AllGraphicsData.emplace_back(gd);
+
+	//density radius representation
+	//const auto sphereBodyRef = _world.CreateBody(BodyType::STATIC);
+	//_bodyRefs.push_back(sphereBodyRef);
+	//auto& sphereBody = _world.GetBody(sphereBodyRef);
+
+	//sphereBody.Mass = 1;
+
+	//sphereBody.Position = { 0,0,0 };
+
+	//const auto sphereColRef = _world.CreateCollider(sphereBodyRef);
+	//_colRefs.push_back(sphereColRef);
+	//auto& sphereCol = _world.GetCollider(sphereColRef);
+	//sphereCol.Shape = Sphere(XMVectorZero(), 15.f);
+	//sphereCol.BodyPosition = sphereBody.Position;
+	//sphereCol.Restitution = 0.f;
+	//sphereCol.IsTrigger = false;
+
+
+	//gd.Color = { 170,0,0 };
+
+	//AllGraphicsData.emplace_back(gd);
+
+	for (size_t i = 0; i < NBPARTICLES; i++) {
+		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
+	}
 
 }
 void WaterBathSample::SampleUpdate() noexcept {
@@ -150,14 +191,12 @@ void WaterBathSample::SampleUpdate() noexcept {
 				_world.GetBody(col.BodyRef).Position = XMVectorZero();
 			}
 
-			_world.GetBody(col.BodyRef).ApplyForce({ 0, GRAV,0 });
-			AllGraphicsData[i].Shape =
-				std::get<SphereF>(shape) + col.BodyPosition;
+			//_world.GetBody(col.BodyRef).ApplyForce({ 0, GRAV,0 });
+			AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
 
 			break;
 		case static_cast<int>(ShapeType::Cuboid):
-			AllGraphicsData[i].Shape =
-				std::get<CuboidF>(shape) + col.BodyPosition;
+			AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
 			break;
 		default:
 			break;
@@ -173,7 +212,7 @@ void WaterBathSample::SampleUpdate() noexcept {
 void WaterBathSample::SampleTearDown() noexcept {}
 
 void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
-	const auto sphereBodyRef = _world.CreateBody();
+	const auto sphereBodyRef = _world.CreateBody(BodyType::FLUID);
 	_bodyRefs.push_back(sphereBodyRef);
 	auto& sphereBody = _world.GetBody(sphereBodyRef);
 
@@ -187,16 +226,11 @@ void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
 	sphereCol.Shape = Sphere(XMVectorZero(), PARTICLESIZE);
 	sphereCol.BodyPosition = sphereBody.Position;
 	sphereCol.Restitution = 0.f;
-	//sphereCol.IsTrigger = true;
+	sphereCol.IsTrigger = false;
 
 	GraphicsData gd;
-	sphereBody.ParticleData = ParticleData{};
-	if (sphereBody.ParticleData.has_value())
-	{
-		gd.Color = { 170,213,219 };
-	}
-	else
-		gd.Color = { 255,0,0 };
+
+	gd.Color = { 170,213,219 };
 
 	AllGraphicsData.emplace_back(gd);
 }

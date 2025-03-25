@@ -12,14 +12,15 @@ void World::SetUp(int initSize) noexcept
 
 	_colliders.resize(initSize);
 	ColliderGenIndices.resize(initSize, 0);
+
 }
 
 void World::TearDown() noexcept
 {
 	_bodies.clear();
 	BodyGenIndices.clear();
-	_colliders.clear();
 
+	_colliders.clear();
 	ColliderGenIndices.clear();
 
 	_colRefPairs.clear();
@@ -32,25 +33,44 @@ void World::Update(const float deltaTime) noexcept
 #endif
 	UpdateBodies(deltaTime);
 
+	for (auto& particle : _particlesData)
+	{
+		particle.second.Density = ProcessDensity(GetBody(particle.first).Position);
+	}
 
-	//UpdateGlobalCollisions();
+	for (auto& particle : _particlesData)
+	{
+		XMVECTOR pressureForce = processPressureForce(particle.first);
+		//GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
+		GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
+		//GetBody(particle.first).Velocity = -pressureForce / particle.second.Density;
+	}
+
+	//UpdateGlobalCollisions(); // Update global collisions the old way, used for testing purposes
+
 	SetUpQuadTree();
-
 	UpdateQuadTreeCollisions(OctTree.Nodes[0]);
 
 }
 
-[[nodiscard]] BodyRef World::CreateBody() noexcept
+[[nodiscard]] BodyRef World::CreateBody(BodyType type) noexcept
 {
 	const auto it = std::find_if(_bodies.begin(), _bodies.end(), [](const Body& body) {
 		return !body.IsEnabled(); // Get first disabled body
-	});
+		});
 
 	if (it != _bodies.end())
 	{
 		const std::size_t index = std::distance(_bodies.begin(), it);
 		const auto bodyRef = BodyRef{ index, BodyGenIndices[index] };
-		GetBody(bodyRef).Enable();
+		auto& body = GetBody(bodyRef);
+		body.Enable();
+		body.Type = type;
+		if (type == BodyType::FLUID)
+		{
+			_particlesData.insert({ bodyRef, ParticleData{} });
+		}
+
 		return bodyRef;
 	}
 
@@ -60,7 +80,13 @@ void World::Update(const float deltaTime) noexcept
 	BodyGenIndices.resize(previousSize * 2, 0);
 
 	const BodyRef bodyRef = { previousSize, BodyGenIndices[previousSize] };
-	GetBody(bodyRef).Enable();
+	auto& body = GetBody(bodyRef);
+	body.Enable();
+	body.Type = type;
+	if (type == BodyType::FLUID)
+	{
+		_particlesData.insert({ bodyRef, ParticleData{} });
+	}
 	return bodyRef;
 
 }
@@ -89,7 +115,7 @@ ColliderRef World::CreateCollider(const BodyRef bodyRef) noexcept
 {
 	const auto it = std::find_if(_colliders.begin(), _colliders.end(), [](const Collider& collider) {
 		return !collider.IsAttached; // Get first disabled collider
-	});
+		});
 
 	if (it != _colliders.end())
 	{
@@ -149,6 +175,7 @@ void World::UpdateBodies(const float deltaTime) noexcept
 			continue;
 		}
 		auto acceleration = XMVectorScale(body.GetForce(), 1 / body.Mass);
+		//printf("Acceleration: %f %f %f\n", XMVectorGetX(acceleration), XMVectorGetY(acceleration), XMVectorGetZ(acceleration));
 		body.Velocity = XMVectorAdd(body.Velocity, XMVectorScale(acceleration, deltaTime));
 		body.Position = XMVectorAdd(body.Position, XMVectorScale(body.Velocity, deltaTime));
 
@@ -222,10 +249,10 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 				auto& col2 = GetCollider(node.ColliderRefAabbs[j].ColRef);
 				auto& body2 = GetBody(col2.BodyRef);
 
-				/*	if (body1.ParticleData && body2.ParticleData)
-					{
-						continue;
-					}*/
+				if (body1.Type == BodyType::FLUID && body2.Type == BodyType::FLUID)
+				{
+					continue; 
+				}
 
 				if (!col2.IsTrigger && !col1.IsTrigger) // Physical collision
 				{
@@ -303,9 +330,9 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-		return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-		return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
@@ -315,9 +342,9 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-		return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-		return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
@@ -336,66 +363,10 @@ void World::UpdateGlobalCollisions() noexcept
 		ColliderRef colRef1{ i, ColliderGenIndices[i] };
 		auto& col1 = GetCollider(colRef1);
 		auto& body1 = GetBody(col1.BodyRef);
+
 		col1.BodyPosition = body1.Position;
 
 		if (!col1.IsAttached) continue;
-
-		//if (body1.ParticleData)
-		//{
-		//	// Reset density and forces for SPH calculations
-		//	float density = 0.0f;
-		//	XMVECTOR pressureForce = XMVectorZero();
-		//	XMVECTOR viscosityForce = XMVectorZero();
-
-		//	for (std::size_t j = 0; j < _colliders.size(); ++j)
-		//	{
-		//		if (i == j) continue;
-
-		//		ColliderRef colRef2{ j, ColliderGenIndices[j] };
-		//		auto& col2 = GetCollider(colRef2);
-		//		auto& body2 = GetBody(col2.BodyRef);
-
-		//		if (!col2.IsAttached || !body2.ParticleData) continue;
-
-		//		// Compute distance between particles
-		//		XMVECTOR diff = XMVectorSubtract(body1.Position, body2.Position);
-		//		float distanceSquared = XMVectorGetX(XMVector3LengthSq(diff));
-		//		float h = body1.ParticleData->SmoothingLength;
-		//		float h2 = h * h;
-
-		//		if (distanceSquared < h2)
-		//		{
-		//			float distance = sqrt(distanceSquared);
-		//			float h_minus_r2 = h2 - distanceSquared;
-
-		//			// Compute density contribution using Poly6 kernel
-		//			float densityWeight = (315.0f / (64.0f * XM_PI * pow(h, 9))) * h_minus_r2 * h_minus_r2 * h_minus_r2;
-		//			density += body2.Mass * densityWeight;
-
-		//			if (distance > 0)
-		//			{
-		//				// Compute pressure force using Spiky kernel
-		//				float weight = (45.0f / (XM_PI * pow(h, 6))) * (h - distance) * (h - distance);
-		//				float pressureTerm = (body1.ParticleData->Pressure + body2.ParticleData->Pressure) / (2 * body2.ParticleData->Density);
-		//				XMVECTOR pressureDir = XMVectorScale(diff, 1.0f / distance);
-		//				pressureForce = XMVectorSubtract(pressureForce, XMVectorScale(pressureDir, pressureTerm * weight));
-
-		//				// Compute viscosity force
-		//				XMVECTOR velocityDiff = XMVectorSubtract(body2.Velocity, body1.Velocity);
-		//				viscosityForce = XMVectorAdd(viscosityForce, XMVectorScale(velocityDiff, ViscosityCoefficient * weight / body2.ParticleData->Density));
-		//			}
-		//		}
-		//	}
-
-		//	// Update density and pressure for body1
-		//	body1.ParticleData->Density = density;
-		//	body1.ParticleData->Pressure = GasConstant * (density - RestDensity);
-
-		//	// Apply forces
-		//	XMVECTOR gravityForce = XMVectorSet(0.0f, Gravity * body1.Mass, 0.0f, 0.0f);
-		//	body1.ApplyForce(XMVectorAdd(pressureForce, XMVectorAdd(viscosityForce, gravityForce)));
-		//	continue;
-		//}
 
 		// Handle solid-body collisions
 		for (std::size_t j = i + 1; j < _colliders.size(); ++j)
@@ -405,6 +376,11 @@ void World::UpdateGlobalCollisions() noexcept
 			auto& body2 = GetBody(col2.BodyRef);
 
 			if (!col2.IsAttached) continue;
+
+			if (body1.Type == BodyType::FLUID && body2.Type == BodyType::FLUID)
+			{
+				continue;
+			}
 
 			if (!col2.IsTrigger && !col1.IsTrigger) // Physical collision
 			{
@@ -445,4 +421,93 @@ void World::UpdateGlobalCollisions() noexcept
 			}
 		}
 	}
+}
+
+float World::SmoothingKernel(float radius, float distance)
+{
+	if (distance >= radius)
+	{
+		return 0;
+	}
+
+	float volume = (PI * Pow(radius, 4)) / 6;
+	return (radius - distance) * (radius - distance) / volume;
+}
+
+float World::SmoothingKernelDerivative(float radius, float distance)
+{
+	if (distance >= radius)
+	{
+		return 0;
+	}
+
+	float scale = 12 / (Pow(radius, 4) * PI);
+	return (distance - radius) * scale;
+}
+
+float World::ProcessDensity(XMVECTOR point)
+{
+	float density = 0;
+	const float mass = 1;
+
+	//todo: just in radius, use octtree and change it s size with the max radius
+	for (auto& particle : _particlesData)
+	{
+		auto& body = GetBody(particle.first);
+		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(point, body.Position)));
+		float influence = SmoothingKernel(smoothigRadius, distance);
+		density += mass * influence;
+	}
+	//printf("Density: %f\n", density);
+	return density;
+	return 0;
+
+}
+//
+//float World::ProcessPropery(XMVECTOR point)
+//{
+//	float property = 0;
+//
+//	for (auto& particle : _particlesData)
+//	{
+//		float dist = XMVectorGetX(XMVector3Length(XMVectorSubtract(point, GetBody(particle.first).Position)));
+//		float influence = SmoothingKernel(smoothigRadius, dist);
+//		float density = ProcessDensity(point);
+//
+//	}
+//	return 0;
+//}
+
+float World::ConvertDensityToPressure(float density)
+{
+	float densityError = density - targetDensity;
+	float pressure = densityError * pressureMultiplier;
+	return pressure;
+}
+
+XMVECTOR World::processPressureForce(BodyRef bodyref)
+{
+	auto& thisParticle = GetBody(bodyref);
+	XMVECTOR pressureForce = XMVectorZero();
+	for (auto& particle : _particlesData)
+	{
+		if (bodyref == particle.first)
+		{
+			continue;
+		}
+		auto& otherParticle = GetBody(particle.first);
+		XMVECTOR offset = XMVectorSubtract(thisParticle.Position, otherParticle.Position);
+		float distance = XMVectorGetX(XMVector3Length(offset));
+		XMVECTOR direction = distance == 0 ? g_XMIdentityR1 : offset / distance;
+		float slope = SmoothingKernelDerivative(smoothigRadius, distance);
+		float density = particle.second.Density;
+		float sharedPressure = CalculateSharedPressure(density, _particlesData.at(bodyref).Density);
+		pressureForce += sharedPressure * direction * slope * otherParticle.Mass / density;
+	}
+	return pressureForce;
+}
+
+float World::CalculateSharedPressure(float density1, float density2)
+{
+	return (ConvertDensityToPressure(density1) + ConvertDensityToPressure(density2)) * 0.5;
 }

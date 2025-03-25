@@ -131,6 +131,8 @@ void Contact::Resolve()
 
 	Restitution = (mass1 * rest1 + mass2 * rest2) / (mass1 + mass2);
 
+	//printf("rest1 = %f, rest2 = %f, Restitution: %f\n", rest1, rest2, Restitution);
+
 	ResolveVelocityAndInterpenetration();
 	ResolveInterpenetration();
 }
@@ -166,11 +168,11 @@ void Contact::ResolveVelocityAndInterpenetration() const noexcept
 	const float impulse = deltaVelocity / totalInverseMass;
 	const auto impulsePerIMass = XMVectorScale(Normal, impulse);
 
-	if (CollidingBodies[0].body->Type == BodyType::DYNAMIC)
+	if (CollidingBodies[0].body->Type == BodyType::DYNAMIC || CollidingBodies[0].body->Type == BodyType::FLUID)
 	{
 		CollidingBodies[0].body->Velocity = XMVectorAdd(CollidingBodies[0].body->Velocity, XMVectorScale(impulsePerIMass, inverseMass1));
 	}
-	if (CollidingBodies[1].body->Type == BodyType::DYNAMIC)
+	if (CollidingBodies[1].body->Type == BodyType::DYNAMIC || CollidingBodies[1].body->Type == BodyType::FLUID)
 	{
 		CollidingBodies[1].body->Velocity = XMVectorSubtract(CollidingBodies[1].body->Velocity, XMVectorScale(impulsePerIMass, inverseMass2));
 	}
@@ -199,12 +201,12 @@ void Contact::ResolveInterpenetration() const noexcept
 
 	const auto movePerIMass = XMVectorScale(Normal, (Penetration / totalInverseMass));
 
-	if (CollidingBodies[0].body->Type == BodyType::DYNAMIC)
+	if (CollidingBodies[0].body->Type == BodyType::DYNAMIC || CollidingBodies[0].body->Type == BodyType::FLUID)
 	{
 		CollidingBodies[0].body->Position = XMVectorAdd(CollidingBodies[0].body->Position, XMVectorScale(movePerIMass, inverseMass1));
 	}
 
-	if (CollidingBodies[1].body->Type == BodyType::DYNAMIC)
+	if (CollidingBodies[1].body->Type == BodyType::DYNAMIC || CollidingBodies[1].body->Type == BodyType::FLUID)
 	{
 		CollidingBodies[1].body->Position = XMVectorSubtract(CollidingBodies[1].body->Position, XMVectorScale(movePerIMass, inverseMass2));
 	}

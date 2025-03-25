@@ -1,2 +1,5 @@
 #pragma once
-#include "Body.h"
+
+namespace SPH {
+
+}

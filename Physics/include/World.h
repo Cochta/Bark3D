@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Body.h"
+#include "Particle.h"
 #include "refs.h"
 #include "Contact.h"
 #include "QuadTree.h"
 #include "SPH.h"
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include <stdexcept>
 
 /**
@@ -16,12 +18,6 @@
 
 class World {
 private:
-	float RestDensity = 0.1f; // Rest density of the fluid
-	float GasConstant = 0.2f; // Gas constant for equation of state
-	float ViscosityCoefficient = 0.1f; // Viscosity coefficient
-	float Gravity = -9.81f; // Gravity force
-
-
 	std::vector<Body> _bodies; /**< A collection of all the bodies in the world. */
 	std::vector<Collider> _colliders; /**< A collection of all the colliders in the world. */
 
@@ -30,10 +26,13 @@ private:
 
 	ContactListener* _contactListener = nullptr; /**< A listener for contact events between colliders. */
 
+	std::unordered_map<BodyRef, ParticleData, BodyRefHash, std::equal_to<BodyRef>, StandardAllocator<std::pair<const BodyRef, ParticleData>>> _particlesData{ _heapAlloc }; /**< A map of particle data associated with bodies. */
+
 
 public:
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */
+
 	OctTree OctTree{ _heapAlloc };/**< OctTree for collision checks */
 
 	World() noexcept = default;
@@ -44,17 +43,14 @@ public:
 
 	void Update(const float deltaTime) noexcept;
 
-
-	[[nodiscard]] BodyRef CreateBody() noexcept;
-
+	//bodies
+	[[nodiscard]] BodyRef CreateBody(BodyType type = BodyType::DYNAMIC) noexcept;
 	void DestroyBody(const BodyRef bodyRef);
-
 	[[nodiscard]] Body& GetBody(const BodyRef bodyRef);
 
+	//coliders
 	[[nodiscard]] ColliderRef CreateCollider(const BodyRef bodyRef) noexcept;
-
 	[[nodiscard]] Collider& GetCollider(const ColliderRef colRef);
-
 	void DestroyCollider(const ColliderRef colRef);
 
 	void SetContactListener(ContactListener* listener) {
@@ -73,4 +69,16 @@ private:
 
 	void UpdateGlobalCollisions() noexcept; //old code unused
 
+	float SmoothingKernel(float radius, float distance);
+	float SmoothingKernelDerivative(float radius, float distance);
+
+	float ProcessDensity(XMVECTOR point);
+	float ProcessPropery(XMVECTOR point);
+	float ConvertDensityToPressure(float density);
+	XMVECTOR processPressureForce(BodyRef bodyref);
+	float CalculateSharedPressure(float density1, float density2);
+
+	float smoothigRadius = 15;
+	float targetDensity = 1000;
+	float pressureMultiplier = 0.5;
 };
