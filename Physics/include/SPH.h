@@ -7,11 +7,17 @@ namespace SPH {
 	inline float PressureMultiplier = 25;
 	inline float nearPressureMultiplier = 0.5;
 	inline float ViscosityStrength = 0.5;
-	inline float SpikyPow2ScalingFactor = 15 / (2 * PI * Pow(SmoothingRadius, 5));;
-	inline float SpikyPow3ScalingFactor = 15 / (PI * Pow(SmoothingRadius, 6));;
-	inline float SpikyPow2DerivativeScalingFactor = 15 / (PI * Pow(SmoothingRadius, 5));
-	inline float SpikyPow3DerivativeScalingFactor = 45 / (PI * Pow(SmoothingRadius, 6));
-	inline float Poly6ScalingFactor = 315 / (64 * PI * Pow(SmoothingRadius, 9));
+	//inline float SpikyPow2ScalingFactor = 6 / (PI * Pow(SmoothingRadius, 4));;
+	//inline float SpikyPow3ScalingFactor = 10 / (PI * Pow(SmoothingRadius, 5));;
+	//inline float SpikyPow2DerivativeScalingFactor = 12 / (PI * Pow(SmoothingRadius, 4));
+	//inline float SpikyPow3DerivativeScalingFactor = 30 / (PI * Pow(SmoothingRadius, 5));
+	//inline float Poly6ScalingFactor = 4 / (PI * Pow(SmoothingRadius, 8));
+	inline float SpikyPow2ScalingFactor = 15.0f / (PI * Pow(SmoothingRadius, 5));
+	inline float SpikyPow3ScalingFactor = 315.0f / (64.0f * PI * Pow(SmoothingRadius, 9));
+	inline float SpikyPow2DerivativeScalingFactor = -30.0f / (PI * Pow(SmoothingRadius, 5));
+	inline float SpikyPow3DerivativeScalingFactor = -945.0f / (32.0f * PI * Pow(SmoothingRadius, 9));
+	inline float Poly6ScalingFactor = 315.0f / (64.0f * PI * Pow(SmoothingRadius, 9));
+
 
 	float SmoothingKernelPoly6(float radius, float dst);
 

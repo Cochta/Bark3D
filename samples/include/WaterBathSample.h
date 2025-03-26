@@ -5,8 +5,8 @@
 #include "Random.h"
 
 static constexpr float WALLSIZE = Metrics::MetersToPixels(0.1f);
-static constexpr float WALLDIST = Metrics::MetersToPixels(1.0f);
-static constexpr float PARTICLESIZE = Metrics::MetersToPixels(0.02f);
+static constexpr float WALLDIST = Metrics::MetersToPixels(3.0f);
+static constexpr float PARTICLESIZE = Metrics::MetersToPixels(0.1f);
 
 class WaterBathSample : public Sample, public ContactListener
 {
