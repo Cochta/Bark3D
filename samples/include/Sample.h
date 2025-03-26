@@ -6,6 +6,10 @@
 #include "Timer.h"
 #include "World.h"
 
+#include "imgui.h"
+#include "imgui_impl_glut.h"
+#include "imgui_impl_opengl2.h"
+
 struct Color {
   int r = 255, g = 255, b = 255, a = 255;
 };
@@ -39,6 +43,7 @@ class Sample {
  public:
   virtual std::string GetName() noexcept = 0;
   virtual std::string GetDescription() noexcept = 0;
+  virtual void DrawImgui() noexcept = 0;
 
   void SetUp() noexcept;
 

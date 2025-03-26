@@ -92,12 +92,6 @@ void Renderer::Run() noexcept {
 
 	DrawAllGraphicsData();
 
-
-	//calculate delta time not used yet
-	//currentTime = glutGet(GLUT_ELAPSED_TIME);
-	//deltaTime = (currentTime - prevTime) / 1000.f;
-	//prevTime = currentTime;
-
 	bool quit = false;
 
 	bool adjustWindow = true;
@@ -107,7 +101,7 @@ void Renderer::Run() noexcept {
 	ImGui_ImplGLUT_NewFrame();
 
 	if (adjustWindow) {
-		ImGui::SetNextWindowSize(ImVec2(Metrics::Width / 3, Metrics::Height / 5));
+		ImGui::SetNextWindowSize(ImVec2(Metrics::Width / 2, Metrics::Height / 3));
 		adjustWindow = false;
 	}
 
@@ -134,6 +128,8 @@ void Renderer::Run() noexcept {
 		.c_str());
 
 	ImGui::Spacing();
+
+	_sampleManager.DrawImgui(_sampleManager.GetCurrentIndex());
 
 	ImGui::SetCursorPosY(ImGui::GetWindowHeight() -
 		(ImGui::GetFrameHeightWithSpacing()));

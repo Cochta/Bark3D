@@ -60,6 +60,8 @@ target_include_directories(Renderer PUBLIC External/imgui/include/)
 
 target_link_libraries(Renderer PUBLIC Samples GLUT::GLUT GLEW::GLEW OpenGL::GL)
 
+target_link_libraries(Samples PUBLIC Renderer)
+
 if (USE_TRACY)
     target_compile_definitions(Renderer PUBLIC TRACY_ENABLE)
     # Link the TracyClient library

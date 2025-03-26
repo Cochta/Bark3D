@@ -27,9 +27,11 @@ private:
 	ContactListener* _contactListener = nullptr; /**< A listener for contact events between colliders. */
 
 	std::unordered_map<BodyRef, ParticleData, BodyRefHash, std::equal_to<BodyRef>, StandardAllocator<std::pair<const BodyRef, ParticleData>>> _particlesData{ _heapAlloc }; /**< A map of particle data associated with bodies. */
-
+	
 
 public:
+	float Gravity = 100;
+
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */
 
@@ -72,13 +74,12 @@ private:
 	float SmoothingKernel(float radius, float distance);
 	float SmoothingKernelDerivative(float radius, float distance);
 
-	float ProcessDensity(XMVECTOR point);
-	float ProcessPropery(XMVECTOR point);
-	float ConvertDensityToPressure(float density);
-	XMVECTOR processPressureForce(BodyRef bodyref);
-	float CalculateSharedPressure(float density1, float density2);
 
-	float smoothigRadius = 15;
-	float targetDensity = 1000;
-	float pressureMultiplier = 0.5;
+	XMVECTOR ProcessDensity(BodyRef bodyref);
+	float ConvertDensityToPressure(float density);
+	float ConvertNearDensityToPressure(float nearDensity);
+	XMVECTOR ProcessPressureForce(BodyRef bodyref);
+	float CalculateSharedPressure(float density1, float density2);
+	float CalculateSharedNearPressure(float density1, float density2);
+	XMVECTOR ProcessViscosityForce(BodyRef bodyref);
 };

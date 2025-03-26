@@ -18,6 +18,8 @@ public:
 	XMVECTOR Position = XMVectorZero();
 	XMVECTOR Velocity = XMVectorZero();
 
+	XMVECTOR PredictedPosition = XMVectorZero();
+
 	float Mass = -1.f;  // Body is disabled if mass is negative
 	BodyType Type = BodyType::DYNAMIC;
 

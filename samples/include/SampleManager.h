@@ -20,6 +20,7 @@ public:
 
 	[[nodiscard]] std::string GetSampleName(int idx) { return _samples[idx]->GetName(); }
 	[[nodiscard]] std::string GetSampleDescription(int idx) { return _samples[idx]->GetDescription(); }
+	[[nodiscard]] void DrawImgui(int idx) { _samples[idx]->DrawImgui(); }
 
 	void SetUp() noexcept;
 
