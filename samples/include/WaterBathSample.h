@@ -14,7 +14,7 @@ private:
 	std::vector<GraphicsData> _quadTreeGraphicsData;
 public:
 
-	int NbParticles = 1000;
+	int NbParticles = 1;
 
 	std::string GetName() noexcept override;
 	std::string GetDescription() noexcept override;

@@ -10,6 +10,8 @@ void World::SetUp(int initSize) noexcept
 	_bodies.resize(initSize);
 	BodyGenIndices.resize(initSize, 0);
 
+	_particlesData.reserve(initSize);
+
 	_colliders.resize(initSize);
 	ColliderGenIndices.resize(initSize, 0);
 
@@ -24,6 +26,8 @@ void World::TearDown() noexcept
 	ColliderGenIndices.clear();
 
 	_colRefPairs.clear();
+
+	_particlesData.clear();
 }
 
 void World::Update(const float deltaTime) noexcept
