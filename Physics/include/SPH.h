@@ -3,7 +3,7 @@
 namespace SPH {
 
 	inline float SmoothingRadius = 15;
-	inline float TargetDensity = 100;
+	inline float TargetDensity = 50;
 	inline float PressureMultiplier = 25;
 	inline float nearPressureMultiplier = 0.5;
 	inline float ViscosityStrength = 0.5;

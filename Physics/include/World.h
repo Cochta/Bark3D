@@ -30,7 +30,7 @@ private:
 	
 
 public:
-	float Gravity = 100;
+	float Gravity = 500;
 
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */

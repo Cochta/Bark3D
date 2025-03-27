@@ -42,9 +42,11 @@ void World::Update(const float deltaTime) noexcept
 
 	for (auto& particle : _particlesData)
 	{
-		float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
-		GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / safeDensity);
+		//float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
+		//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first));
 		//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / particle.second.Density);
+		XMVECTOR pressureForce = ProcessPressureForce(particle.first);
+		GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
 	}
 
 	//for (auto& particle : _particlesData)
@@ -463,25 +465,25 @@ XMVECTOR World::ProcessDensity(BodyRef bodyref)
 	//todo: just in radius, use octtree and change it s size with the max radius
 	for (auto& particle : _particlesData)
 	{
-		if (bodyref == particle.first) continue;
+		//if (bodyref == particle.first) continue;
 
-		auto otherPos = GetBody(particle.first).Position;
-		auto offsetToOther = XMVectorSubtract(otherPos, pos);
-		float distanceToOther = XMVectorGetX(XMVector3Dot(offsetToOther, offsetToOther));
+		//auto otherPos = GetBody(particle.first).Position;
+		//auto offsetToOther = XMVectorSubtract(otherPos, pos);
+		//float distanceToOther = XMVectorGetX(XMVector3Dot(offsetToOther, offsetToOther));
 
-		// Skip if not within radius
-		if (distanceToOther > pow2Radius) continue;
+		//// Skip if not within radius
+		//if (distanceToOther > pow2Radius) continue;
 
-		float distance = sqrt(distanceToOther);
+		//float distance = sqrt(distanceToOther);
 
-		density += SPH::DensityKernel(SPH::SmoothingRadius, distance);
-		nearDensity += SPH::NearDensityKernel(SPH::SmoothingRadius, distance);
+		//density += SPH::DensityKernel(SPH::SmoothingRadius, distance);
+		//nearDensity += SPH::NearDensityKernel(SPH::SmoothingRadius, distance);
 
 		//old code
-		//auto& body = GetBody(particle.first);
-		//float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(pos, body.Position)));
-		//float influence = SmoothingKernel(SPH::SmoothingRadius, distance);
-		//density += influence;
+		auto& body = GetBody(particle.first);
+		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(pos, body.Position)));
+		float influence = SmoothingKernel(SPH::SmoothingRadius, distance);
+		density += influence;
 
 	}
 	return XMVectorSet(density, nearDensity, 0, 0);
@@ -501,59 +503,59 @@ float World::ConvertNearDensityToPressure(float nearDensity)
 
 XMVECTOR World::ProcessPressureForce(BodyRef bodyref)
 {
-	//auto& thisParticle = GetBody(bodyref);//old code
+	auto& thisParticle = GetBody(bodyref);//old code
 
-	auto thisParticle = _particlesData.at(bodyref);
-	float density = thisParticle.Density;
-	float densityNear = thisParticle.NearDensity;
-	float pressure = ConvertDensityToPressure(density);
-	float nearPressure = ConvertNearDensityToPressure(densityNear);
+	//auto thisParticle = _particlesData.at(bodyref);
+	//float density = thisParticle.Density;
+	//float densityNear = thisParticle.NearDensity;
+	//float pressure = ConvertDensityToPressure(density);
+	//float nearPressure = ConvertNearDensityToPressure(densityNear);
 	XMVECTOR pressureForce = XMVectorZero();
 
-	XMVECTOR pos = GetBody(bodyref).Position;
-	float sqrRadius = SPH::SmoothingRadius * SPH::SmoothingRadius;
+	//XMVECTOR pos = GetBody(bodyref).Position;
+	//float sqrRadius = SPH::SmoothingRadius * SPH::SmoothingRadius;
 
 	for (auto& particle : _particlesData)
 	{
 		if (bodyref == particle.first) continue;
 
-		auto otherParticle = GetBody(particle.first);
-		auto otherPos = otherParticle.Position;
-		auto offsetToOther = otherPos - pos;
-		float sqrDstToOther = XMVectorGetX(XMVector3Dot(offsetToOther, offsetToOther));
+		//auto otherParticle = GetBody(particle.first);
+		//auto otherPos = otherParticle.Position;
+		//auto offsetToOther = otherPos - pos;
+		//float sqrDstToOther = XMVectorGetX(XMVector3Dot(offsetToOther, offsetToOther));
 
-		if (sqrDstToOther > sqrRadius) continue;
+		//if (sqrDstToOther > sqrRadius) continue;
 
 		// Calculate pressure force
 
-		float distance = XMVectorGetX(XMVector3Length(offsetToOther));
-		XMVECTOR direction = (distance > 1e-6) ? XMVectorDivide(offsetToOther, XMVectorReplicate(distance)) : XMVectorZero();
+		//float distance = XMVectorGetX(XMVector3Length(offsetToOther));
+		//XMVECTOR direction = (distance > 1e-6) ? XMVectorDivide(offsetToOther, XMVectorReplicate(distance)) : XMVectorZero();
 
-		float otherDensity = particle.second.Density;
-		float otherDensityNear = particle.second.NearDensity;
-		float otherPressure = ConvertDensityToPressure(otherDensity);
-		float otherNearPressure = ConvertNearDensityToPressure(otherDensityNear);
+		//float otherDensity = particle.second.Density;
+		//float otherDensityNear = particle.second.NearDensity;
+		//float otherPressure = ConvertDensityToPressure(otherDensity);
+		//float otherNearPressure = ConvertNearDensityToPressure(otherDensityNear);
 
-		float sharedPressure = CalculateSharedPressure(pressure, otherPressure);
-		float sharedNearPressure = CalculateSharedNearPressure(nearPressure, otherNearPressure);
+		//float sharedPressure = CalculateSharedPressure(pressure, otherPressure);
+		//float sharedNearPressure = CalculateSharedNearPressure(nearPressure, otherNearPressure);
 
 
-		float safeOtherDensity = (otherDensity > 1e-6) ? otherDensity : 1e-6;
-		float safeOtherDensityNear = (otherDensityNear > 1e-6) ? otherDensityNear : 1e-6;
+		//float safeOtherDensity = (otherDensity > 1e-6) ? otherDensity : 1e-6;
+		//float safeOtherDensityNear = (otherDensityNear > 1e-6) ? otherDensityNear : 1e-6;
 
-		pressureForce += direction * SPH::DensityDerivative(SPH::SmoothingRadius, distance) * sharedPressure / safeOtherDensity;
-		pressureForce += direction * SPH::NearDensityDerivative(SPH::SmoothingRadius, distance) * sharedNearPressure / safeOtherDensityNear;
+		//pressureForce += direction * SPH::DensityDerivative(SPH::SmoothingRadius, distance) * sharedPressure / safeOtherDensity;
+		//pressureForce += direction * SPH::NearDensityDerivative(SPH::SmoothingRadius, distance) * sharedNearPressure / safeOtherDensityNear;
 
 
 		//old code
-		//auto& otherParticle = GetBody(particle.first);
-		//XMVECTOR offset = XMVectorSubtract(thisParticle.Position, otherParticle.Position);
-		//float distance = XMVectorGetX(XMVector3Length(offset));
-		//XMVECTOR direction = distance == 0 ? g_XMIdentityR1 : offset / distance;
-		//float slope = SmoothingKernelDerivative(SPH::SmoothingRadius, distance);
-		//float density = particle.second.Density;
-		//float sharedPressure = CalculateSharedPressure(density, _particlesData.at(bodyref).Density);
-		//pressureForce += sharedPressure * direction * slope * otherParticle.Mass / density;
+		auto& otherParticle = GetBody(particle.first);
+		XMVECTOR offset = XMVectorSubtract(thisParticle.Position, otherParticle.Position);
+		float distance = XMVectorGetX(XMVector3Length(offset));
+		XMVECTOR direction = distance == 0 ? g_XMIdentityR1 : offset / distance;
+		float slope = SmoothingKernelDerivative(SPH::SmoothingRadius, distance);
+		float density = particle.second.Density;
+		float sharedPressure = CalculateSharedPressure(density, _particlesData.at(bodyref).Density);
+		pressureForce += sharedPressure * direction * slope * otherParticle.Mass / density;
 
 	}
 	return pressureForce;
