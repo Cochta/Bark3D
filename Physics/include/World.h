@@ -73,6 +73,11 @@ private:
 
 	float SmoothingKernel(float radius, float distance);
 	float SmoothingKernelDerivative(float radius, float distance);
+	float ViscosityKernelLaplacian(float h, float r)
+	{
+		if (r >= h) return 0.0f;
+		return 45.0f / (XM_PI * pow(h, 6)) * (h - r); // this is the standard Laplacian of viscosity kernel
+	}
 
 
 	XMVECTOR ProcessDensity(BodyRef bodyref);

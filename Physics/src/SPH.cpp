@@ -56,8 +56,8 @@ float SPH::NearDensityDerivative(float radius, float dst) {
     return DerivativeSpikyPow3(radius, dst);
 }
 
-//float ViscosityKernel(float radius, float dst)
-//{
-//	return SmoothingKernelPoly6(radius, dst);
-//}
+float SPH::ViscosityKernel(float radius, float dst)
+{
+	return SmoothingKernelPoly6(radius, dst);
+}
 

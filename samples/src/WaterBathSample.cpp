@@ -27,7 +27,7 @@ void WaterBathSample::DrawImgui() noexcept
 	if (ImGui::SliderFloat("Pressure multiplier", &SPH::PressureMultiplier, 0.0f, 100.0f)) {
 		SPH::PressureMultiplier = SPH::PressureMultiplier;
 	}
-	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 100.0f)) {
+	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 100000.0f)) {
 		SPH::ViscosityStrength = SPH::ViscosityStrength;
 	}
 }

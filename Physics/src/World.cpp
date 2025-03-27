@@ -53,10 +53,10 @@ void World::Update(const float deltaTime) noexcept
 		GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
 	}
 
-	//for (auto& particle : _particlesData)
-	//{
-	//	GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
-	//}
+	for (auto& particle : _particlesData)
+	{
+		GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
+	}
 
 	//UpdateGlobalCollisions(); // Update global collisions the old way, used for testing purposes
 
@@ -469,7 +469,6 @@ XMVECTOR World::ProcessDensity(BodyRef bodyref)
 	//todo: just in radius, use octtree and change it s size with the max radius
 	for (auto& particle : _particlesData)
 	{
-		//if (bodyref == particle.first) continue;
 
 		//auto otherPos = GetBody(particle.first).Position;
 		//auto offsetToOther = XMVectorSubtract(otherPos, pos);
@@ -574,15 +573,38 @@ float World::CalculateSharedNearPressure(float nearDensity1, float nearDensity2)
 	return (ConvertNearDensityToPressure(nearDensity1) + ConvertNearDensityToPressure(nearDensity2)) * 0.5f;
 }
 
+//XMVECTOR World::ProcessViscosityForce(BodyRef bodyref)
+//{
+//	XMVECTOR viscosityForce = XMVectorZero();
+//	XMVECTOR position = GetBody(bodyref).Position;
+//	for (auto& particle : _particlesData)
+//	{
+//		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(position, GetBody(particle.first).Position)));
+//		float influence = SmoothingKernel(SPH::SmoothingRadius, distance);
+//		viscosityForce += (GetBody(particle.first).Velocity - GetBody(bodyref).Velocity) * influence;
+//	}
+//	//printf("ViscosityForce: %f %f %f\n", XMVectorGetX(viscosityForce), XMVectorGetY(viscosityForce), XMVectorGetZ(viscosityForce));
+//	return viscosityForce * SPH::ViscosityStrength;
+//}
+
 XMVECTOR World::ProcessViscosityForce(BodyRef bodyref)
 {
 	XMVECTOR viscosityForce = XMVectorZero();
 	XMVECTOR position = GetBody(bodyref).Position;
+	XMVECTOR velocity = GetBody(bodyref).Velocity;
+
 	for (auto& particle : _particlesData)
 	{
-		float distance = XMVectorGetX(XMVector3Length(XMVectorSubtract(position, GetBody(particle.first).Position)));
+		if (particle.first == bodyref) continue; // optional, skip self
+
+		const Body& neighbor = GetBody(particle.first);
+		XMVECTOR r = position - neighbor.Position;
+		float distance = XMVectorGetX(XMVector3Length(r));
+
+		if (distance > SPH::SmoothingRadius) continue;
+
 		float influence = SmoothingKernel(SPH::SmoothingRadius, distance);
-		viscosityForce += (GetBody(particle.first).Velocity - GetBody(bodyref).Velocity) * influence;
+		viscosityForce += (neighbor.Velocity - velocity) * influence * GetBody(bodyref).Mass; // missing mass factor
 	}
 	//printf("ViscosityForce: %f %f %f\n", XMVectorGetX(viscosityForce), XMVectorGetY(viscosityForce), XMVectorGetZ(viscosityForce));
 	return viscosityForce * SPH::ViscosityStrength;
