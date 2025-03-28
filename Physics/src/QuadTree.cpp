@@ -35,7 +35,7 @@ OctTree::OctTree(Allocator& alloc) noexcept : _alloc(alloc), Nodes{ StandardAllo
 
 }
 
-void OctTree::SubdivideNode(BVHNode& node) noexcept
+void OctTree::SubdivideNode(BVHNode& node, float sphRadius) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -43,6 +43,8 @@ void OctTree::SubdivideNode(BVHNode& node) noexcept
 	// Compute half the size of the bounding box
 	const XMVECTOR halfSize = XMVectorScale(XMVectorSubtract(node.Bounds.MaxBound(), node.Bounds.MinBound()), 0.5f);
 	const XMVECTOR minBound = node.Bounds.MinBound();
+	sphRadius = 0;
+	const XMVECTOR expand = XMVectorReplicate(sphRadius);
 
 	// Precompute offsets for all 8 child nodes
 	const XMVECTOR offsets[SUBDIVIDE_NBR] = {
@@ -60,8 +62,8 @@ void OctTree::SubdivideNode(BVHNode& node) noexcept
 	for (int i = 0; i < SUBDIVIDE_NBR; ++i)
 	{
 		node.Children[i] = &Nodes[_nodeIndex + i];
-		const XMVECTOR childMin = XMVectorAdd(minBound, offsets[i]);
-		const XMVECTOR childMax = XMVectorAdd(childMin, halfSize);
+		const XMVECTOR childMin = XMVectorSubtract(XMVectorAdd(minBound, offsets[i]), expand);
+		const XMVECTOR childMax = XMVectorAdd(XMVectorAdd(XMVectorAdd(minBound, offsets[i]), halfSize), expand);
 		node.Children[i]->Bounds = { childMin, childMax };
 		node.Children[i]->Depth = node.Depth + 1;
 	}
@@ -87,7 +89,7 @@ void OctTree::Insert(BVHNode& node, const ColliderRefAabb& colliderRefAabb) noex
 	}
 	else if (node.ColliderRefAabbs.size() >= MAX_COL_NBR && node.Depth < MAX_DEPTH)
 	{
-		SubdivideNode(node);
+		SubdivideNode(node, SPH::SmoothingRadius);
 		node.ColliderRefAabbs.push_back(colliderRefAabb);
 		for (const auto& child : node.Children)
 		{

@@ -15,7 +15,7 @@ void WaterBathSample::DrawImgui() noexcept
 		_world.Gravity = _world.Gravity;
 	}
 	static int numParticles = NbParticles;
-	if (ImGui::SliderInt("Number of Particles", &numParticles, 0, 1000)) {
+	if (ImGui::SliderInt("Number of Particles", &numParticles, 0, 10000)) {
 		NbParticles = numParticles;
 	}
 	if (ImGui::SliderFloat("Smoothing radius", &SPH::SmoothingRadius, 0.0f, 100.0f)) {
@@ -27,17 +27,17 @@ void WaterBathSample::DrawImgui() noexcept
 	if (ImGui::SliderFloat("Pressure multiplier", &SPH::PressureMultiplier, 0.0f, 100.0f)) {
 		SPH::PressureMultiplier = SPH::PressureMultiplier;
 	}
-	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 100000.0f)) {
+	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 20000.0f)) {
 		SPH::ViscosityStrength = SPH::ViscosityStrength;
 	}
 }
 
 void WaterBathSample::OnCollisionEnter(ColliderRef col1,
-	ColliderRef col2) noexcept {
+									   ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::OnCollisionExit(ColliderRef col1,
-	ColliderRef col2) noexcept {
+									  ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::SampleSetUp() noexcept {
@@ -64,7 +64,7 @@ void WaterBathSample::SampleSetUp() noexcept {
 	for (size_t i = 0; i < NbParticles; i++) {
 		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
 					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) });
+					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) }, PARTICLESIZE, BodyType::FLUID);
 	}
 
 }
@@ -74,26 +74,62 @@ void WaterBathSample::SampleUpdate() noexcept {
 	//						  AllGraphicsData.end());
 	//}
 
+	//if (_mouseLeftReleased) {
+	//	CreateBall({ 0,10000,0 }, PARTICLESIZE * 5, BodyType::DYNAMIC);
+	//}
+	/*else if (_mouseRightReleased) {
+		CreateRect(_mousePos);
+	}*/
+
 	for (std::size_t i = 0; i < _colRefs.size(); ++i) {
 		const auto& col = _world.GetCollider(_colRefs[i]);
 
 		const auto& shape = _world.GetCollider(_colRefs[i]).Shape;
 
+		auto& body = _world.GetBody(col.BodyRef);
+
 		switch (shape.index()) {
 		case static_cast<int>(ShapeType::Sphere):
 
-			if (XMVectorGetY(col.BodyPosition) <= -500)//fix to reduce quadtree size
-			{
-				_world.GetBody(col.BodyRef).Position = XMVectorZero();
-			}
-			AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
+		if (XMVectorGetY(col.BodyPosition) <= -500)//fix to reduce quadtree size
+		{
+			_world.GetBody(col.BodyRef).Position = XMVectorZero();
+			_world.GetBody(col.BodyRef).Velocity = XMVectorZero();
+		}
 
-			break;
+		//if (XMVectorGetX(col.BodyPosition) <= -100)
+		//{
+		//	body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
+		//}
+		//else if (XMVectorGetX(col.BodyPosition) >= 100)
+		//{
+		//	body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
+		//}
+		//if (XMVectorGetY(col.BodyPosition) <= -100)
+		//{
+		//	body.Position = XMVectorSetY(body.Position, -100);
+		//	body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
+		//}
+		//else if (XMVectorGetY(col.BodyPosition) >= 100)
+		//{
+		//	body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
+		//}
+		//if (XMVectorGetZ(col.BodyPosition) <= -100)
+		//{
+		//	body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
+		//}
+		//else if (XMVectorGetZ(col.BodyPosition) >= 100)
+		//{
+		//	body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
+		//}
+		AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
+
+		break;
 		case static_cast<int>(ShapeType::Cuboid):
-			AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
-			break;
+		AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
+		break;
 		default:
-			break;
+		break;
 		}
 	}
 
@@ -105,26 +141,26 @@ void WaterBathSample::SampleUpdate() noexcept {
 
 void WaterBathSample::SampleTearDown() noexcept {}
 
-void WaterBathSample::CreateBall(XMVECTOR position) noexcept {
-	const auto sphereBodyRef = _world.CreateBody(BodyType::FLUID);
+void WaterBathSample::CreateBall(XMVECTOR position, float radius, BodyType type) noexcept {
+	const auto sphereBodyRef = _world.CreateBody(type);
 	_bodyRefs.push_back(sphereBodyRef);
 	auto& sphereBody = _world.GetBody(sphereBodyRef);
 
-	sphereBody.Mass = 1;
+	sphereBody.Mass = 1.f;//(type == BodyType::FLUID) ? 1 : 10;
 
 	sphereBody.Position = position;
 
 	const auto sphereColRef = _world.CreateCollider(sphereBodyRef);
 	_colRefs.push_back(sphereColRef);
 	auto& sphereCol = _world.GetCollider(sphereColRef);
-	sphereCol.Shape = Sphere(XMVectorZero(), PARTICLESIZE);
+	sphereCol.Shape = Sphere(XMVectorZero(), radius);
 	sphereCol.BodyPosition = sphereBody.Position;
 	sphereCol.Restitution = 0.f;
 	sphereCol.IsTrigger = false;
 
 	GraphicsData gd;
 
-	gd.Color = { 170,213,219 };
+	gd.Color = (type == BodyType::FLUID) ? Color{ 170, 213, 219 } : Color{ 100, 213, 100 };
 
 	AllGraphicsData.emplace_back(gd);
 }

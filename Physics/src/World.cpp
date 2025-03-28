@@ -7,6 +7,9 @@
 
 void World::SetUp(int initSize) noexcept
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	_bodies.resize(initSize);
 	BodyGenIndices.resize(initSize, 0);
 
@@ -19,6 +22,9 @@ void World::SetUp(int initSize) noexcept
 
 void World::TearDown() noexcept
 {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	_bodies.clear();
 	BodyGenIndices.clear();
 
@@ -36,32 +42,42 @@ void World::Update(const float deltaTime) noexcept
 	ZoneScoped;
 #endif
 	UpdateBodies(deltaTime);
+	updateGrid();
 
-	for (auto& particle : _particlesData)
-	{
-		auto vec = ProcessDensity(particle.first);
-		particle.second.Density = XMVectorGetX(vec);
-		particle.second.NearDensity = XMVectorGetY(vec);
-	}
+	computeNeighborsDensity();
+	computeNeighborsPressure();
+	computeNeighborsViscosity();
 
-	for (auto& particle : _particlesData)
-	{
-		//float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
-		//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first));
-		//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / particle.second.Density);
-		XMVECTOR pressureForce = ProcessPressureForce(particle.first);
-		GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
-	}
+	//for (auto& particle : _particlesData)
+	//{
+	//	auto vec = ProcessDensity(particle.first);
+	//	particle.second.Density = XMVectorGetX(vec);
+	//	particle.second.NearDensity = XMVectorGetY(vec);
+	//}
 
-	for (auto& particle : _particlesData)
-	{
-		GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
-	}
+	//for (auto& particle : _particlesData)
+	//{
+	//	//float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
+	//	//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first));
+	//	//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / particle.second.Density);
+	//	XMVECTOR pressureForce = ProcessPressureForce(particle.first);
+	//	GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
+	//}
+
+	//for (auto& particle : _particlesData)
+	//{
+	//	GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
+	//}
 
 	//UpdateGlobalCollisions(); // Update global collisions the old way, used for testing purposes
 
 	SetUpQuadTree();
-	UpdateQuadTreeCollisions(OctTree.Nodes[0]);
+	//UpdateOctTreeFluidDensities(OctTree.Nodes[0]);
+	//UpdateOctTreeFluidPressureForces(OctTree.Nodes[0]);
+	//UpdateOctTreeFluidViscosity(OctTree.Nodes[0]);
+
+	UpdateOctTreeCollisions(OctTree.Nodes[0]);
+	//_fluidBodiesPairs.clear();
 
 }
 
@@ -69,7 +85,7 @@ void World::Update(const float deltaTime) noexcept
 {
 	const auto it = std::find_if(_bodies.begin(), _bodies.end(), [](const Body& body) {
 		return !body.IsEnabled(); // Get first disabled body
-		});
+	});
 
 	if (it != _bodies.end())
 	{
@@ -127,7 +143,7 @@ ColliderRef World::CreateCollider(const BodyRef bodyRef) noexcept
 {
 	const auto it = std::find_if(_colliders.begin(), _colliders.end(), [](const Collider& collider) {
 		return !collider.IsAttached; // Get first disabled collider
-		});
+	});
 
 	if (it != _colliders.end())
 	{
@@ -241,7 +257,7 @@ void World::SetUpQuadTree() noexcept {
 	}
 }
 
-void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
+void World::UpdateOctTreeCollisions(const BVHNode& node) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -321,7 +337,7 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 	{
 		for (const auto& child : node.Children)
 		{
-			UpdateQuadTreeCollisions(*child);
+			UpdateOctTreeCollisions(*child);
 		}
 	}
 }
@@ -343,9 +359,9 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-			return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-			return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
@@ -355,9 +371,9 @@ void World::UpdateQuadTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-			return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-			return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+		return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}

@@ -3,9 +3,11 @@
 #include "Collider.h"
 #include "Allocators.h"
 #include "UniquePtr.h"
+#include "SPH.h"
 
 #include <memory>
 #include <array>
+#include <unordered_map>
 
 static constexpr int MAX_COL_NBR = 16; /**< Maximum number of colliders in a quadtree node. */
 static constexpr int MAX_DEPTH = 4; /**< Maximum depth of the quadtree. */
@@ -81,5 +83,68 @@ private:
 	 * @brief Subdivide a quadtree node into smaller child nodes.
 	 * @param node The node to subdivide.
 	 */
-	void SubdivideNode(BVHNode& node) noexcept;
+	void SubdivideNode(BVHNode& node, float sphRadius = 0) noexcept;
+};
+struct XMINT3Equal {
+	bool operator()(const XMINT3& a, const XMINT3& b) const {
+		return a.x == b.x && a.y == b.y && a.z == b.z;
+	}
+};
+
+// Convertit un vecteur en indices de grille
+inline XMINT3 getGridIndex(const XMVECTOR& pos) {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
+	return XMINT3(
+		static_cast<int>(XMVectorGetX(pos) / SPH::SmoothingRadius),
+		static_cast<int>(XMVectorGetY(pos) / SPH::SmoothingRadius),
+		static_cast<int>(XMVectorGetZ(pos) / SPH::SmoothingRadius)
+	);
+}
+
+// Fonction de hachage pour la grille
+struct GridHash {
+	size_t operator()(const XMINT3& cell) const {
+		return (static_cast<size_t>(cell.x) * 73856093) ^
+			(static_cast<size_t>(cell.y) * 19349663) ^
+			(static_cast<size_t>(cell.z) * 83492791);
+	}
+};
+constexpr XMINT3 offsets[] = {
+{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, {-1, 0, -1}, {-1, 0, 0}, {-1, 0, 1}, {-1, 1, -1}, {-1, 1, 0}, {-1, 1, 1},
+{0, -1, -1}, {0, -1, 0}, {0, -1, 1}, {0, 0, -1}, {0, 0, 0}, {0, 0, 1}, {0, 1, -1}, {0, 1, 0}, {0, 1, 1},
+{1, -1, -1}, {1, -1, 0}, {1, -1, 1}, {1, 0, -1}, {1, 0, 0}, {1, 0, 1}, {1, 1, -1}, {1, 1, 0}, {1, 1, 1}
+};
+
+// Grille pour SPH
+struct SpatialHashGrid {
+	std::unordered_map<XMINT3, std::vector<BodyRef>, GridHash, XMINT3Equal> grid;
+
+	void clear() {
+		grid.clear();
+	}
+
+	// Ajoute une particule à la grille
+	void insertParticle(const BodyRef& ref, const XMVECTOR& position) {
+		XMINT3 cell = getGridIndex(position);
+		grid[cell].push_back(ref);
+	}
+	// Trouve les voisins dans un rayon h
+	std::vector<BodyRef> findNeighbors(const XMVECTOR& position) {
+		std::vector<BodyRef> neighbors;
+		neighbors.reserve(50);  // Réserve de la mémoire pour éviter les réallocations fréquentes.
+
+		XMINT3 cell = getGridIndex(position);
+
+		for (const auto& offset : offsets) {
+			XMINT3 neighborCell = XMINT3(cell.x + offset.x, cell.y + offset.y, cell.z + offset.z);
+			auto it = grid.find(neighborCell);
+			if (it != grid.end()) {
+				const std::vector<BodyRef>* neighborList = &it->second; // Utilisation d'un pointeur
+				neighbors.insert(neighbors.end(), neighborList->begin(), neighborList->end());
+			}
+		}
+		return neighbors;
+	}
 };

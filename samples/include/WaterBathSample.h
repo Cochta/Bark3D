@@ -36,7 +36,7 @@ protected:
 	void SampleTearDown() noexcept override;
 
 private:
-	void CreateBall(XMVECTOR position) noexcept;
+	void CreateBall(XMVECTOR position, float radius, BodyType type) noexcept;
 
 	void CreateWall(XMVECTOR position, XMVECTOR minBound, XMVECTOR maxBound, bool isFilled) noexcept;
 
