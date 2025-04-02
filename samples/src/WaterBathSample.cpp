@@ -11,7 +11,7 @@ std::string WaterBathSample::GetDescription() noexcept {
 
 void WaterBathSample::DrawImgui() noexcept
 {
-	if (ImGui::SliderFloat("Gravity", &_world.Gravity, 0.0f, 1000.0f)) {
+	if (ImGui::SliderFloat("Gravity", &_world.Gravity, 0.0f, 500.0f)) {
 		_world.Gravity = _world.Gravity;
 	}
 	static int numParticles = NbParticles;
