@@ -34,6 +34,7 @@ void World::TearDown() noexcept
 	_colRefPairs.clear();
 
 	_particlesData.clear();
+	grid.clear();
 }
 
 void World::Update(const float deltaTime) noexcept
