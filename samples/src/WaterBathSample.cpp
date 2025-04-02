@@ -18,7 +18,7 @@ void WaterBathSample::DrawImgui() noexcept
 	if (ImGui::SliderInt("Number of Particles", &numParticles, 0, 10000)) {
 		NbParticles = numParticles;
 	}
-	if (ImGui::SliderFloat("Smoothing radius", &SPH::SmoothingRadius, 0.0f, 100.0f)) {
+	if (ImGui::SliderFloat("Smoothing radius", &SPH::SmoothingRadius, 1.0f, 100.0f)) {
 		SPH::SmoothingRadius = SPH::SmoothingRadius;
 	}
 	if (ImGui::SliderFloat("Target density", &SPH::TargetDensity, 0.0f, 2000.0f)) {
@@ -75,7 +75,7 @@ void WaterBathSample::SampleUpdate() noexcept {
 	//}
 
 	//if (_mouseLeftReleased) {
-	//	CreateBall({ 0,10000,0 }, PARTICLESIZE * 5, BodyType::DYNAMIC);
+	//	CreateBall({ 0,1000,0 }, PARTICLESIZE * 5, BodyType::DYNAMIC);
 	//}
 	/*else if (_mouseRightReleased) {
 		CreateRect(_mousePos);
