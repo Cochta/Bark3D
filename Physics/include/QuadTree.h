@@ -106,9 +106,7 @@ inline XMINT3 getGridIndex(const XMVECTOR& pos) {
 // Fonction de hachage pour la grille
 struct GridHash {
 	size_t operator()(const XMINT3& cell) const {
-		return (static_cast<size_t>(cell.x) * 73856093) ^
-			(static_cast<size_t>(cell.y) * 19349663) ^
-			(static_cast<size_t>(cell.z) * 83492791);
+		return cell.x ^ cell.y ^ cell.z;
 	}
 };
 constexpr XMINT3 offsets[] = {

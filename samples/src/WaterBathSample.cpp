@@ -44,22 +44,22 @@ void WaterBathSample::SampleSetUp() noexcept {
 	_world.SetContactListener(this);
 	GraphicsData gd;
 	// Ground
-	CreateWall({ 0,-WALLDIST - WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, true);
+	//CreateWall({ 0,-WALLDIST - WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, true);
 
-	// Wall 1
-	CreateWall({ -WALLDIST - WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
+	//// Wall 1
+	//CreateWall({ -WALLDIST - WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
 
-	// Wall 2
-	CreateWall({ WALLDIST + WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
+	//// Wall 2
+	//CreateWall({ WALLDIST + WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
 
-	// Wall 3
-	CreateWall({ 0,0,-WALLDIST - WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST, WALLDIST, WALLSIZE }, false);
+	//// Wall 3
+	//CreateWall({ 0,0,-WALLDIST - WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST, WALLDIST, WALLSIZE }, false);
 
-	// Wall 4
-	CreateWall({ 0,0,WALLDIST + WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST,WALLDIST, WALLSIZE }, false);
+	//// Wall 4
+	//CreateWall({ 0,0,WALLDIST + WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST,WALLDIST, WALLSIZE }, false);
 
-	// Roof
-	CreateWall({ 0,WALLDIST + WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, false);
+	//// Roof
+	//CreateWall({ 0,WALLDIST + WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, false);
 
 	for (size_t i = 0; i < NbParticles; i++) {
 		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
@@ -91,37 +91,37 @@ void WaterBathSample::SampleUpdate() noexcept {
 		switch (shape.index()) {
 		case static_cast<int>(ShapeType::Sphere):
 
-		if (XMVectorGetY(col.BodyPosition) <= -500)//fix to reduce quadtree size
-		{
-			_world.GetBody(col.BodyRef).Position = XMVectorZero();
-			_world.GetBody(col.BodyRef).Velocity = XMVectorZero();
-		}
+		//if (XMVectorGetY(col.BodyPosition) <= -WALLDIST * 2)//fix to reduce quadtree size
+		//{
+		//	_world.GetBody(col.BodyRef).Position = XMVectorZero();
+		//	_world.GetBody(col.BodyRef).Velocity = XMVectorZero();
+		//}
 
-		//if (XMVectorGetX(col.BodyPosition) <= -100)
-		//{
-		//	body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
-		//}
-		//else if (XMVectorGetX(col.BodyPosition) >= 100)
-		//{
-		//	body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
-		//}
-		//if (XMVectorGetY(col.BodyPosition) <= -100)
-		//{
-		//	body.Position = XMVectorSetY(body.Position, -100);
-		//	body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
-		//}
-		//else if (XMVectorGetY(col.BodyPosition) >= 100)
-		//{
-		//	body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
-		//}
-		//if (XMVectorGetZ(col.BodyPosition) <= -100)
-		//{
-		//	body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
-		//}
-		//else if (XMVectorGetZ(col.BodyPosition) >= 100)
-		//{
-		//	body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
-		//}
+		if (XMVectorGetX(col.BodyPosition) <= -WALLDIST)
+		{
+			body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
+		}
+		else if (XMVectorGetX(col.BodyPosition) >= WALLDIST)
+		{
+			body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
+		}
+		if (XMVectorGetY(col.BodyPosition) <= -WALLDIST)
+		{
+			body.Position = XMVectorSetY(body.Position, -WALLDIST);
+			body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
+		}
+		else if (XMVectorGetY(col.BodyPosition) >= WALLDIST)
+		{
+			body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
+		}
+		if (XMVectorGetZ(col.BodyPosition) <= -WALLDIST)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
+		}
+		else if (XMVectorGetZ(col.BodyPosition) >= WALLDIST)
+		{
+			body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
+		}
 		AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
 
 		break;

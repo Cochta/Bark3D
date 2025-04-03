@@ -77,7 +77,7 @@ void World::Update(const float deltaTime) noexcept
 	//UpdateOctTreeFluidPressureForces(OctTree.Nodes[0]);
 	//UpdateOctTreeFluidViscosity(OctTree.Nodes[0]);
 
-	UpdateOctTreeCollisions(OctTree.Nodes[0]);
+	//UpdateOctTreeCollisions(OctTree.Nodes[0]);
 	//_fluidBodiesPairs.clear();
 
 }
