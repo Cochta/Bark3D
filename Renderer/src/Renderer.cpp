@@ -311,6 +311,7 @@ void Renderer::DrawAllGraphicsData() noexcept {
 		if (bd.Shape.index() == (int)ShapeType::Sphere) {
 			auto& sphere = std::get<SphereF>(bd.Shape);
 			DrawSphere(sphere.Center(), sphere.Radius(), 30, { bd.Color });
+
 		}
 		else if (bd.Shape.index() == (int)ShapeType::Cuboid) {
 			auto& rect = std::get<CuboidF>(bd.Shape);

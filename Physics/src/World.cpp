@@ -48,6 +48,7 @@ void World::Update(const float deltaTime) noexcept
 	computeNeighborsDensity();
 	computeNeighborsPressure();
 	computeNeighborsViscosity();
+	computeNeighborsVorticity();
 
 	//for (auto& particle : _particlesData)
 	//{

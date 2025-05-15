@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Body.h"
 #include "Particle.h"
@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <stdexcept>
+#include <iostream>
 
 /**
  * @brief Represents the physics world containing bodies and interactions.
@@ -168,4 +169,67 @@ private:
 			GetBody(ref).ApplyForce(viscosityForce * SPH::ViscosityStrength);
 		}
 	}
+	void computeNeighborsVorticity() {
+#ifdef TRACY_ENABLE
+		ZoneScoped;
+#endif
+		std::unordered_map<BodyRef, XMVECTOR, BodyRefHash, std::equal_to<BodyRef>> vorticityMap;
+
+		// 1. Compute vorticity ω = ∇ × velocity
+		for (auto& [ref, data] : _particlesData) {
+			XMVECTOR omega = XMVectorZero();
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			auto& thisParticle = GetBody(ref);
+
+			for (auto& otherRef : neighbors) {
+				if (ref == otherRef) continue;
+				auto& otherParticle = GetBody(otherRef);
+
+				XMVECTOR r = thisParticle.Position - otherParticle.Position;
+				float distance = XMVectorGetX(XMVector3Length(r));
+				if (distance > SPH::SmoothingRadius || distance == 0) continue;
+
+				XMVECTOR velDiff = otherParticle.Velocity - thisParticle.Velocity;
+				XMVECTOR gradKernel = r * SmoothingKernelDerivative(SPH::SmoothingRadius, distance) / distance;
+
+				omega += XMVector3Cross(velDiff, gradKernel);
+			}
+
+			vorticityMap[ref] = omega ;
+		}
+
+		// 2. Compute vorticity force f_conf = ε * (N × ω)
+		for (auto& [ref, data] : _particlesData) {
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			auto& thisParticle = GetBody(ref);
+
+			// Compute ∇|ω| for this particle
+			XMVECTOR gradMagOmega = XMVectorZero();
+			float magOmegaThis = XMVectorGetX(XMVector3Length(vorticityMap[ref]));
+
+			for (auto& otherRef : neighbors) {
+				if (ref == otherRef) continue;
+
+				XMVECTOR r = GetBody(ref).Position - GetBody(otherRef).Position;
+				float distance = XMVectorGetX(XMVector3Length(r));
+				if (distance > SPH::SmoothingRadius || distance == 0) continue;
+
+				float magOmegaOther = XMVectorGetX(XMVector3Length(vorticityMap[otherRef]));
+				float diff = magOmegaOther - magOmegaThis;
+				XMVECTOR dir = r / distance;
+				float slope = SmoothingKernelDerivative(SPH::SmoothingRadius, distance);
+				gradMagOmega += dir * diff * slope;
+			}
+
+			// Normalize ∇|ω| to get N
+			XMVECTOR N = XMVectorGetX(XMVector3LengthSq(gradMagOmega)) > 0.0001f ? XMVector3Normalize(gradMagOmega) : XMVectorZero();
+
+			// f_conf = ε * (N × ω)
+			constexpr float epsilon = 10.0f; // tunable parameter
+			XMVECTOR force = epsilon * XMVector3Cross(N, vorticityMap[ref]);
+			//printf("VorticityForce: %f %f %f\n", XMVectorGetX(force), XMVectorGetY(force), XMVectorGetZ(force));
+			thisParticle.ApplyForce(force);
+		}
+	}
 };
+

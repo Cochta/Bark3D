@@ -30,41 +30,69 @@ void WaterBathSample::DrawImgui() noexcept
 	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 10000.0f)) {
 		SPH::ViscosityStrength = SPH::ViscosityStrength;
 	}
+	if (ImGui::SliderFloat("Simulation size", &WALLDIST, 0.1f, 5.f)) {
+		WALLDIST = WALLDIST;
+	}
 }
 
 void WaterBathSample::OnCollisionEnter(ColliderRef col1,
-									   ColliderRef col2) noexcept {
+	ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::OnCollisionExit(ColliderRef col1,
-									  ColliderRef col2) noexcept {
+	ColliderRef col2) noexcept {
 }
 
 void WaterBathSample::SampleSetUp() noexcept {
 	_world.SetContactListener(this);
 	GraphicsData gd;
 	// Ground
-	CreateWall({ 0,-WALLDIST - WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, true);
+	CreateWall({ 0,-WALLDIST - WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST*2, WALLSIZE, WALLDIST }, true);
 
 	// Wall 1
 	CreateWall({ -WALLDIST - WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
 
 	// Wall 2
-	CreateWall({ WALLDIST + WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
+	CreateWall({ WALLDIST*2 + WALLSIZE,0,0 }, { -WALLSIZE, -WALLDIST, -WALLDIST }, { WALLSIZE, WALLDIST, WALLDIST }, false);
 
 	// Wall 3
-	CreateWall({ 0,0,-WALLDIST - WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST, WALLDIST, WALLSIZE }, false);
+	CreateWall({ 0,0,-WALLDIST - WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST*2, WALLDIST, WALLSIZE }, false);
 
 	// Wall 4
-	CreateWall({ 0,0,WALLDIST + WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST,WALLDIST, WALLSIZE }, false);
+	CreateWall({ 0,0,WALLDIST + WALLSIZE }, { -WALLDIST, -WALLDIST, -WALLSIZE }, { WALLDIST*2,WALLDIST, WALLSIZE }, false);
 
 	// Roof
-	CreateWall({ 0,WALLDIST + WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST, WALLSIZE, WALLDIST }, false);
+	CreateWall({ 0,WALLDIST + WALLSIZE ,0 }, { -WALLDIST, -WALLSIZE, -WALLDIST }, { WALLDIST*2, WALLSIZE, WALLDIST }, false);
 
-	for (size_t i = 0; i < NbParticles; i++) {
-		CreateBall({ Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
+	/*for (size_t i = 0; i < NbParticles; i++) {
+		CreateBall({ Random::Range(-WALLDIST, WALLDIST * 0.5f),
 					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f),
-					 Random::Range(-WALLDIST * 0.8f, WALLDIST * 0.8f) }, PARTICLESIZE, BodyType::FLUID);
+					 Random::Range(-WALLDIST, WALLDIST * 0.5f) }, PARTICLESIZE, BodyType::FLUID);
+	}*/
+
+	std::vector<XMVECTOR> particlePositions;
+
+	for (size_t i = 0; i < NbParticles; ) {
+		XMVECTOR pos = XMVectorSet(
+			Random::Range(-WALLDIST, WALLDIST * 0.2f),
+			Random::Range(-WALLDIST, WALLDIST),
+			Random::Range(-WALLDIST, WALLDIST * 0.2f),
+			0.0f
+		);
+
+		bool overlaps = false;
+		for (const auto& existing : particlePositions) {
+			if (XMVectorGetX(XMVector3LengthSq(pos - existing)) < (PARTICLESIZE * PARTICLESIZE * 4)) {
+				overlaps = true;
+				break;
+			}
+		}
+
+		if (!overlaps) {
+			particlePositions.push_back(pos);
+			CreateBall(pos, PARTICLESIZE, BodyType::FLUID);
+			++i;
+		}
 	}
 
 }
@@ -91,45 +119,45 @@ void WaterBathSample::SampleUpdate() noexcept {
 		switch (shape.index()) {
 		case static_cast<int>(ShapeType::Sphere):
 
-		//if (XMVectorGetY(col.BodyPosition) <= -WALLDIST * 2)//fix to reduce quadtree size
-		//{
-		//	_world.GetBody(col.BodyRef).Position = XMVectorZero();
-		//	_world.GetBody(col.BodyRef).Velocity = XMVectorZero();
-		//}
+			//if (XMVectorGetY(col.BodyPosition) <= -WALLDIST * 2)//fix to reduce quadtree size
+			//{
+			//	_world.GetBody(col.BodyRef).Position = XMVectorZero();
+			//	_world.GetBody(col.BodyRef).Velocity = XMVectorZero();
+			//}
 
-		//if (XMVectorGetX(col.BodyPosition) <= -WALLDIST)
-		//{
-		//	body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
-		//}
-		//else if (XMVectorGetX(col.BodyPosition) >= WALLDIST)
-		//{
-		//	body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
-		//}
-		//if (XMVectorGetY(col.BodyPosition) <= -WALLDIST)
-		//{
-		//	body.Position = XMVectorSetY(body.Position, -WALLDIST);
-		//	body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
-		//}
-		//else if (XMVectorGetY(col.BodyPosition) >= WALLDIST)
-		//{
-		//	body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
-		//}
-		//if (XMVectorGetZ(col.BodyPosition) <= -WALLDIST)
-		//{
-		//	body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
-		//}
-		//else if (XMVectorGetZ(col.BodyPosition) >= WALLDIST)
-		//{
-		//	body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
-		//}
-		AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
+			//if (XMVectorGetX(col.BodyPosition) <= -WALLDIST)
+			//{
+			//	body.Velocity = XMVectorSetX(body.Velocity, Abs(XMVectorGetX(body.Velocity)));
+			//}
+			//else if (XMVectorGetX(col.BodyPosition) >= WALLDIST)
+			//{
+			//	body.Velocity = XMVectorSetX(body.Velocity, -Abs(XMVectorGetX(body.Velocity)));
+			//}
+			//if (XMVectorGetY(col.BodyPosition) <= -WALLDIST)
+			//{
+			//	body.Position = XMVectorSetY(body.Position, -WALLDIST);
+			//	body.Velocity = XMVectorSetY(body.Velocity, Abs(XMVectorGetY(body.Velocity)));
+			//}
+			//else if (XMVectorGetY(col.BodyPosition) >= WALLDIST)
+			//{
+			//	body.Velocity = XMVectorSetY(body.Velocity, -Abs(XMVectorGetY(body.Velocity)));
+			//}
+			//if (XMVectorGetZ(col.BodyPosition) <= -WALLDIST)
+			//{
+			//	body.Velocity = XMVectorSetZ(body.Velocity, Abs(XMVectorGetZ(body.Velocity)));
+			//}
+			//else if (XMVectorGetZ(col.BodyPosition) >= WALLDIST)
+			//{
+			//	body.Velocity = XMVectorSetZ(body.Velocity, -Abs(XMVectorGetZ(body.Velocity)));
+			//}
+			AllGraphicsData[i].Shape = std::get<SphereF>(shape) + col.BodyPosition;
 
-		break;
+			break;
 		case static_cast<int>(ShapeType::Cuboid):
-		AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
-		break;
+			AllGraphicsData[i].Shape = std::get<CuboidF>(shape) + col.BodyPosition;
+			break;
 		default:
-		break;
+			break;
 		}
 	}
 

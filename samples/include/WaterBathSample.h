@@ -5,16 +5,17 @@
 #include "Random.h"
 
 static constexpr float WALLSIZE = Metrics::MetersToPixels(0.1f);
-static constexpr float WALLDIST = Metrics::MetersToPixels(1.0f);
+ 
 static constexpr float PARTICLESIZE = Metrics::MetersToPixels(0.05f);
+
 
 class WaterBathSample : public Sample, public ContactListener
 {
 private:
 	std::vector<GraphicsData> _quadTreeGraphicsData;
 public:
-
-	int NbParticles = 1000;
+	float WALLDIST = Metrics::MetersToPixels(1.0f);
+	int NbParticles = 500;
 
 	std::string GetName() noexcept override;
 	std::string GetDescription() noexcept override;
