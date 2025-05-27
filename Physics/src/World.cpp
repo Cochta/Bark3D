@@ -42,7 +42,7 @@ void World::Update(const float deltaTime) noexcept
 #ifdef TRACY_ENABLE
 	ZoneScoped;
 #endif
-	UpdateBodies(deltaTime);
+	UpdateForces(deltaTime);
 	updateGrid();
 
 	computeNeighborsDensity();
@@ -189,7 +189,7 @@ void World::DestroyCollider(const ColliderRef colRef)
 	_colliders[colRef.Index].IsAttached = false;
 }
 
-void World::UpdateBodies(const float deltaTime) noexcept
+void World::UpdateForces(const float deltaTime) noexcept
 {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -206,7 +206,6 @@ void World::UpdateBodies(const float deltaTime) noexcept
 		}
 		body.ApplyForce({ 0, -Gravity,0 });
 		auto acceleration = XMVectorScale(body.GetForce(), 1 / body.Mass);
-		//printf("Acceleration: %f %f %f\n", XMVectorGetX(acceleration), XMVectorGetY(acceleration), XMVectorGetZ(acceleration));
 		body.Velocity = XMVectorAdd(body.Velocity, XMVectorScale(acceleration, deltaTime));
 		body.Position = XMVectorAdd(body.Position, XMVectorScale(body.Velocity, deltaTime));
 		body.PredictedPosition = XMVectorAdd(body.Position, XMVectorScale(body.Velocity, deltaTime));

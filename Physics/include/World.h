@@ -63,7 +63,7 @@ public:
 
 private:
 
-	void UpdateBodies(const float deltaTime) noexcept;
+	void UpdateForces(const float deltaTime) noexcept;
 
 	void SetUpQuadTree() noexcept;
 
@@ -96,7 +96,7 @@ private:
 #endif
 		grid.clear();
 		for (auto& [ref, data] : _particlesData) {
-			grid.insertParticle(ref, data.Position = GetBody(ref).Position);
+			grid.insertParticle(ref, data.PredictedPosition = GetBody(ref).PredictedPosition);
 		}
 	}
 
@@ -105,7 +105,7 @@ private:
 		ZoneScoped;
 #endif
 		for (auto& [ref, data] : _particlesData) {
-			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.PredictedPosition);
 
 			float density = 0;
 
@@ -123,7 +123,7 @@ private:
 		ZoneScoped;
 #endif
 		for (auto& [ref, data] : _particlesData) {
-			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.PredictedPosition);
 
 			XMVECTOR pressureForce = XMVectorZero();
 
@@ -147,7 +147,7 @@ private:
 		ZoneScoped;
 #endif
 		for (auto& [ref, data] : _particlesData) {
-			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.PredictedPosition);
 
 			auto& thisParticle = GetBody(ref);
 			XMVECTOR viscosityForce = XMVectorZero();
@@ -178,7 +178,7 @@ private:
 		// 1. Compute vorticity ω = ∇ × velocity
 		for (auto& [ref, data] : _particlesData) {
 			XMVECTOR omega = XMVectorZero();
-			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.PredictedPosition);
 			auto& thisParticle = GetBody(ref);
 
 			for (auto& otherRef : neighbors) {
@@ -200,7 +200,7 @@ private:
 
 		// 2. Compute vorticity force f_conf = ε * (N × ω)
 		for (auto& [ref, data] : _particlesData) {
-			std::vector<BodyRef> neighbors = grid.findNeighbors(data.Position);
+			std::vector<BodyRef> neighbors = grid.findNeighbors(data.PredictedPosition);
 			auto& thisParticle = GetBody(ref);
 
 			// Compute ∇|ω| for this particle
