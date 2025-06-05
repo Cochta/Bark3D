@@ -28,6 +28,7 @@ private:
 	std::size_t _nbObjects{};
 
 public:
+	void DrawImgui() noexcept override {};
 	std::string GetName() noexcept override;
 	std::string GetDescription() noexcept override;
 

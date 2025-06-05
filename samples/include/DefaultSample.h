@@ -4,6 +4,7 @@
 
 class DefaultSample : public Sample {
 public:
+	void DrawImgui() noexcept override {};
 	std::string GetName() noexcept override { return "None"; };
 	std::string GetDescription() noexcept override { return "Using: SDL2 and Dear ImGui\n\nAuthor: Constantin Verine"; };
 protected:

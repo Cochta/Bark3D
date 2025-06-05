@@ -13,6 +13,7 @@ private:
 
 
 public:
+	void DrawImgui() noexcept override {};
 	std::string GetName() noexcept override;
 	std::string GetDescription() noexcept override;
 

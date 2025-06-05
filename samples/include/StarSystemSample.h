@@ -13,6 +13,7 @@ private:
     static constexpr float G = 6.67f;
     static constexpr std::size_t PLANET_NBR = 1000;
 public:
+    void DrawImgui() noexcept override {};
     std::string GetName() noexcept override;
     std::string GetDescription() noexcept override;
 protected:

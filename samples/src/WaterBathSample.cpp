@@ -30,9 +30,9 @@ void WaterBathSample::DrawImgui() noexcept
 	if (ImGui::SliderFloat("Viscosity strength", &SPH::ViscosityStrength, 0.0f, 10000.0f)) {
 		SPH::ViscosityStrength = SPH::ViscosityStrength;
 	}
-	if (ImGui::SliderFloat("Simulation size", &WALLDIST, 0.1f, 5.f)) {
-		WALLDIST = WALLDIST;
-	}
+	//if (ImGui::SliderFloat("Simulation size", &WALLDIST, 0.1f, 5.f)) {
+	//	WALLDIST = WALLDIST;
+	//}
 }
 
 void WaterBathSample::OnCollisionEnter(ColliderRef col1,
