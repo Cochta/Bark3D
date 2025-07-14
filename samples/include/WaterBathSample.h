@@ -15,7 +15,7 @@ private:
 	std::vector<GraphicsData> _quadTreeGraphicsData;
 public:
 	float WALLDIST = Metrics::MetersToPixels(1.0f);
-	int NbParticles = 500;
+	int NbParticles = 1600;
 
 	std::string GetName() noexcept override;
 	std::string GetDescription() noexcept override;

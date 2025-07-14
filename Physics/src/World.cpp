@@ -48,29 +48,42 @@ void World::Update(const float deltaTime) noexcept
 	computeNeighborsDensity();
 	computeNeighborsPressure();
 	computeNeighborsViscosity();
-	computeNeighborsVorticity();
+	//computeNeighborsVorticity();
 
-	//for (auto& particle : _particlesData)
-	//{
-	//	auto vec = ProcessDensity(particle.first);
-	//	particle.second.Density = XMVectorGetX(vec);
-	//	particle.second.NearDensity = XMVectorGetY(vec);
-	//}
-
-	//for (auto& particle : _particlesData)
-	//{
-	//	//float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
-	//	//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first));
-	//	//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / particle.second.Density);
-	//	XMVECTOR pressureForce = ProcessPressureForce(particle.first);
-	//	GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
-	//}
-
-	//for (auto& particle : _particlesData)
-	//{
-	//	GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
-	//}
-
+//	{
+//#ifdef TRACY_ENABLE
+//		ZoneNamedN(DensityComputation, "DensityComputation", true);
+//#endif
+//		for (auto& particle : _particlesData)
+//		{
+//			auto vec = ProcessDensity(particle.first);
+//			particle.second.Density = XMVectorGetX(vec);
+//			particle.second.NearDensity = XMVectorGetY(vec);
+//		}
+//	}
+//	{
+//#ifdef TRACY_ENABLE
+//		ZoneNamedN(PressureComputation, "PressureComputation", true);
+//#endif
+//
+//		for (auto& particle : _particlesData)
+//		{
+//			//float safeDensity = (particle.second.Density > 1e-6) ? particle.second.Density : 1e-6;
+//			//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first));
+//			//GetBody(particle.first).ApplyForce(ProcessPressureForce(particle.first) / particle.second.Density);
+//			XMVECTOR pressureForce = ProcessPressureForce(particle.first);
+//			GetBody(particle.first).ApplyForce(pressureForce / particle.second.Density);
+//		}
+//	}
+//	{
+//#ifdef TRACY_ENABLE
+//		ZoneNamedN(ViscosityComputation, "ViscosityComputation", true);
+//#endif
+//		for (auto& particle : _particlesData)
+//		{
+//			GetBody(particle.first).ApplyForce(ProcessViscosityForce(particle.first));
+//		}
+//	}
 	//UpdateGlobalCollisions(); // Update global collisions the old way, used for testing purposes
 
 	SetUpQuadTree();
@@ -87,7 +100,7 @@ void World::Update(const float deltaTime) noexcept
 {
 	const auto it = std::find_if(_bodies.begin(), _bodies.end(), [](const Body& body) {
 		return !body.IsEnabled(); // Get first disabled body
-	});
+		});
 
 	if (it != _bodies.end())
 	{
@@ -145,7 +158,7 @@ ColliderRef World::CreateCollider(const BodyRef bodyRef) noexcept
 {
 	const auto it = std::find_if(_colliders.begin(), _colliders.end(), [](const Collider& collider) {
 		return !collider.IsAttached; // Get first disabled collider
-	});
+		});
 
 	if (it != _colliders.end())
 	{
@@ -360,9 +373,9 @@ void World::UpdateOctTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-		return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(sphere, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-		return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(sphere, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}
@@ -372,9 +385,9 @@ void World::UpdateOctTreeCollisions(const BVHNode& node) noexcept
 		switch (ShapeB)
 		{
 		case ShapeType::Sphere:
-		return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(rect, std::get<SphereF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		case ShapeType::Cuboid:
-		return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
+			return Intersect(rect, std::get<CuboidF>(colB.Shape) + GetBody(colB.BodyRef).Position);
 		}
 		break;
 	}

@@ -85,13 +85,14 @@ private:
 	 */
 	void SubdivideNode(BVHNode& node, float sphRadius = 0) noexcept;
 };
+
 struct XMINT3Equal {
 	bool operator()(const XMINT3& a, const XMINT3& b) const {
 		return a.x == b.x && a.y == b.y && a.z == b.z;
 	}
 };
 
-// Convertit un vecteur en indices de grille
+// Converts a vector to grid indices
 inline XMINT3 getGridIndex(const XMVECTOR& pos) {
 #ifdef TRACY_ENABLE
 	ZoneScoped;
@@ -103,19 +104,19 @@ inline XMINT3 getGridIndex(const XMVECTOR& pos) {
 	);
 }
 
-// Fonction de hachage pour la grille
+// Hash function for the grid
 struct GridHash {
 	size_t operator()(const XMINT3& cell) const {
 		return cell.x ^ cell.y ^ cell.z;
 	}
 };
+
 constexpr XMINT3 offsets[] = {
 {-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, {-1, 0, -1}, {-1, 0, 0}, {-1, 0, 1}, {-1, 1, -1}, {-1, 1, 0}, {-1, 1, 1},
 {0, -1, -1}, {0, -1, 0}, {0, -1, 1}, {0, 0, -1}, {0, 0, 0}, {0, 0, 1}, {0, 1, -1}, {0, 1, 0}, {0, 1, 1},
 {1, -1, -1}, {1, -1, 0}, {1, -1, 1}, {1, 0, -1}, {1, 0, 0}, {1, 0, 1}, {1, 1, -1}, {1, 1, 0}, {1, 1, 1}
 };
 
-// Grille pour SPH
 struct SpatialHashGrid {
 	std::unordered_map<XMINT3, std::vector<BodyRef>, GridHash, XMINT3Equal> grid;
 
@@ -123,12 +124,13 @@ struct SpatialHashGrid {
 		grid.clear();
 	}
 
-	// Ajoute une particule à la grille
+	// Add particle to the grid
 	void insertParticle(const BodyRef& ref, const XMVECTOR& position) {
 		XMINT3 cell = getGridIndex(position);
 		grid[cell].push_back(ref);
 	}
-	// Trouve les voisins dans un rayon h
+
+	// Find neighbors of a particle based on its position and radius
 	std::vector<BodyRef> findNeighbors(const XMVECTOR& position) {
 		std::vector<BodyRef> neighbors;
 		neighbors.reserve(50);  // Réserve de la mémoire pour éviter les réallocations fréquentes.
