@@ -15,7 +15,7 @@ void WaterBathSample::DrawImgui() noexcept
 		_world.Gravity = _world.Gravity;
 	}
 	static int numParticles = NbParticles;
-	if (ImGui::SliderInt("Number of Particles", &numParticles, 0, 10000)) {
+	if (ImGui::SliderInt("Number of Particles", &numParticles, 0, 2000)) {
 		NbParticles = numParticles;
 	}
 	if (ImGui::SliderFloat("Smoothing radius", &SPH::SmoothingRadius, 1.0f, 100.0f)) {
@@ -44,6 +44,7 @@ void WaterBathSample::OnCollisionExit(ColliderRef col1,
 }
 
 void WaterBathSample::SampleSetUp() noexcept {
+	_world.Gravity = 500.f;
 	_world.SetContactListener(this);
 	GraphicsData gd;
 	// Ground

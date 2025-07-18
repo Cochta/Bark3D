@@ -5,7 +5,7 @@
 #include "Random.h"
 
 
-static constexpr float SPEED = -500;
+static constexpr float SPEED = -150;
 
 class GroundCollisionSample : public Sample, public ContactListener
 {

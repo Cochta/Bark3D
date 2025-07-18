@@ -13,7 +13,7 @@ private:
 
 	static constexpr XMVECTOR cuboid_BOUNDS = { Metrics::MetersToPixels(0.15f), Metrics::MetersToPixels(0.15f), Metrics::MetersToPixels(0.15f) };
 	static constexpr float sphere_RADIUS = Metrics::MetersToPixels(0.1f);
-	static constexpr float SPEED = 100;
+	static constexpr float SPEED = 30;
 
 	static constexpr std::size_t sphere_NBR = 20;
 	static constexpr std::size_t cuboid_NBR = 20;

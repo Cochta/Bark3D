@@ -65,7 +65,7 @@ void Renderer::SetUp() {
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(Metrics::Width, Metrics::Height);
-	glutCreateWindow("ouais");
+	glutCreateWindow("Bark3D Samples");
 
 	// enter GLUT event processing cycle
 	IMGUI_CHECKVERSION();
@@ -170,12 +170,12 @@ void Renderer::DrawSphere(const XMVECTOR center, const float radius,
 	glScalef(radius, radius, radius); // Scale the unit sphere to match the desired radius
 	glCallList(sphereDisplayList);
 
-	// Draw the black outline by rendering a slightly larger sphere in wireframe mode
-	glColor3f(0, 0, 0); // Black outline
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT); // Cull front faces (render only backfaces)
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glLineWidth(3.0f); // Adjust thickness of the outline
+	//// Draw the black outline by rendering a slightly larger sphere in wireframe mode
+	//glColor3f(0, 0, 0); // Black outline
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT); // Cull front faces (render only backfaces)
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glLineWidth(3.0f); // Adjust thickness of the outline
 
 	glPushMatrix();
 	glScalef(1.02f, 1.02f, 1.02f); // Slightly scale up the sphere

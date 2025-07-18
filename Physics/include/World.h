@@ -32,7 +32,7 @@ private:
 	SpatialHashGrid grid;
 	std::vector<BodyRef> neighbors;
 public:
-	float Gravity = 500;
+	float Gravity = 0;
 
 	std::vector<size_t> BodyGenIndices; /**< Indices of generated bodies. */
 	std::vector<size_t> ColliderGenIndices; /**< Indices of generated colliders. */

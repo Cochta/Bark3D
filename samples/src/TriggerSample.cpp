@@ -110,7 +110,7 @@ void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 	{
 		for (int i = 0; i < node.Children.size(); i++)
 		{
-			switch (i)
+			/*switch (i)
 			{
 			case 0: color.r = 255; break;
 			case 1: color.g = 255; break;
@@ -124,7 +124,7 @@ void TriggerSample::DrawQuadtree(const BVHNode& node) noexcept
 				color = { 255,255,255,255 };
 				break;
 
-			}
+			}*/
 			DrawQuadtree(*node.Children[i]);
 		}
 	}
@@ -183,22 +183,13 @@ void TriggerSample::SampleUpdate() noexcept
 
 		if (_triggerNbrPerCollider[i] > 0)
 		{
-			if (i == 0)
-			{
-				AllGraphicsData[i].Color = { 255, 255, 0, 255 };
-			}
-			else
-				AllGraphicsData[i].Color = { 0, 255, 0, 255 };
+			AllGraphicsData[i].Color = { 0, 255, 0, 255 };
 		}
 		else
 		{
-			if (i == 0)
-			{
-				AllGraphicsData[i].Color = { 255, 0, 0, 255 };
-			}
-			else {
-				AllGraphicsData[i].Color = { 0, 0, 255, 255 };
-			}
+
+			AllGraphicsData[i].Color = { 0, 0, 255, 255 };
+
 		}
 	}
 

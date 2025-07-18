@@ -17,11 +17,11 @@ void StarSystemSample::SampleSetUp() noexcept
 		auto& sun = _world.GetBody(_sunRef);
 		//sun.Position = { static_cast<float>(Metrics::Width) / 2, static_cast<float>(Metrics::Height) / 2 };
 		sun.Position = { 0, 0, 0 };
-		sun.Mass = 5000;
+		sun.Mass = 50000;
 
 		_bodyRefs.push_back(_sunRef);
 		GraphicsData sgd;
-		_spheres.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.05f));
+		_spheres.emplace_back(XMVectorZero(), Metrics::MetersToPixels(0.5f));
 		sgd.Color = { 255, 255, 0, 255 };
 		AllGraphicsData.push_back(sgd);
 
@@ -31,7 +31,7 @@ void StarSystemSample::SampleSetUp() noexcept
 			auto bodyRef = _world.CreateBody();
 			auto& body = _world.GetBody(bodyRef);
 			//body.Position = { Random::Range(100.f, Metrics::Width - 100.f),Random::Range(100.f, Metrics::Height - 100.f) };
-			body.Position = { Random::Range(-25.f, 25.f),Random::Range(-25.f, 25.f), Random::Range(-25.f, 25.f) };
+			body.Position = { Random::Range(-250.f, 250.f),Random::Range(-250.f, 250.f), Random::Range(-250.f, 250.f) };
 
 			auto r = XMVectorSubtract(_world.GetBody(_sunRef).Position, body.Position);
 			auto v = sqrt(G * (_world.GetBody(_sunRef).Mass / XMVectorGetX(XMVector3Length(r))));
@@ -44,15 +44,15 @@ void StarSystemSample::SampleSetUp() noexcept
 			body.Velocity = XMVectorScale(XMVector3Normalize(velocityDir), v);
 			//body.Velocity = XMVectorScale(XMVector3Normalize(XMVectorSet(-XMVectorGetY(r), XMVectorGetX(r), 0, 0)), v);
 
-			body.Mass = 10.f;
+			body.Mass = 100.f;
 
 			// Graphics
 			_bodyRefs.push_back(bodyRef);
 			GraphicsData gd;
 			_spheres.emplace_back(XMVectorZero(),
 				Random::Range(
-					Metrics::MetersToPixels(0.0025f),
-					Metrics::MetersToPixels(0.005f)));
+					Metrics::MetersToPixels(0.025f),
+					Metrics::MetersToPixels(0.05f)));
 			gd.Color = {
 					Random::Range(0, 255),
 					Random::Range(0, 255),
